@@ -12,7 +12,7 @@ export default function PrimerizeWasmPython() {
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [dynamicFileName] = useState(`primerize_${Date.now()}`);
 
-
+// [test change to del]
 
     useEffect(() => {
         async function initPythonWasm() {
