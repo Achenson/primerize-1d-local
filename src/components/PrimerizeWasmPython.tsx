@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// 1. Import the python code directly as a raw string!
+import primerizeRunnerScript from '../python/run_primerize.py?raw'
 
 declare global {
     interface Window {
@@ -12,11 +14,10 @@ export default function PrimerizeWasmPython() {
     const [status, setStatus] = useState<string>('Booting WebAssembly Python engine...');
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
     useEffect(() => {
         async function initPythonWasm() {
             try {
-                // 1. Jeśli skryptu nie ma jeszcze w oknie, wstrzykujemy go dynamicznie z CDN
+                // 1. Jeśli skryptu Pyodide nie ma jeszcze w oknie, wstrzykujemy go dynamicznie z CDN
                 if (!window.loadPyodide) {
                     setStatus('Loading Pyodide script library into page thread...');
                     const script = document.createElement('script');
@@ -33,43 +34,32 @@ export default function PrimerizeWasmPython() {
                 setStatus('Booting WebAssembly Python engine...');
                 const pyodide = await window.loadPyodide();
 
-                setStatus('Loading core scientific math packages...');
-                // Pobieramy pakiety matematyczne i wykresów zoptymalizowane pod WASM prosto z Pyodide
+                setStatus('Loading core scientific math packages & package manager...');
+                // Ładujemy podstawowe środowiska oraz micropip
                 await pyodide.loadPackage(["numpy", "matplotlib", "micropip"]);
 
                 setStatus('Installing missing Excel dependency (xlwt)...');
-                // Uruchamiamy micropip w Pythonie, aby pobrać i zainstalować pakiet xlwt bezpośrednio w WASM
+                // Dynamiczna instalacja brakującej biblioteki xlwt z repozytorium PyPI
                 await pyodide.runPythonAsync(`
                 import micropip
                 await micropip.install('xlwt')
                 `);
 
-
-                setStatus('Creating wirtual filesystem for Stanford Primerize...');
-                // Tworzymy folder pakietu w wirtualnym środowisku Pythona
+                setStatus('Creating virtual filesystem for Stanford Primerize...');
                 try {
-                    pyodide.FS.mkdir('/primerize');
+                    pyodide.FS.mkdir('primerize');
                 } catch (e) {
                     // Ignoruj błąd, jeśli folder już istnieje
                 }
 
-                // Pełna lista plików odczytana z Twojego drzewa katalogów
+                // Pełna lista plików z Twojego folderu public/primerize
                 const primerizeFiles = [
-                    '__init__.py',
-                    'misprime.py',
-                    'primerize_1d.py',
-                    'primerize_2d.py',
-                    'primerize_3d.py',
-                    'primerize_custom.py',
-                    'thermo.py',
-                    'util.py',
-                    'util_class.py',
-                    'util_func.py',
-                    'util_server.py',
-                    'wrapper.py'
+                    '__init__.py', 'misprime.py', 'primerize_1d.py', 'primerize_2d.py',
+                    'primerize_3d.py', 'primerize_custom.py', 'thermo.py', 'util.py',
+                    'util_class.py', 'util_func.py', 'util_server.py', 'wrapper.py'
                 ];
 
-                // 2. Pobieramy wszystkie pliki z public/primerize i zapisujemy je w systemie plików WASM
+                // Pobieramy wszystkie pliki ze Stanforda z katalogu publicznego
                 for (const file of primerizeFiles) {
                     setStatus(`Loading ${file} into WASM filesystem...`);
                     const response = await fetch(`/primerize/${file}`);
@@ -77,23 +67,23 @@ export default function PrimerizeWasmPython() {
                         throw new Error(`Nie udało się pobrać pliku z folderu public: /primerize/${file}`);
                     }
                     const fileContent = await response.text();
-                    pyodide.FS.writeFile(`/primerize/${file}`, fileContent);
+                    pyodide.FS.writeFile(`primerize/${file}`, fileContent);
                 }
 
                 setStatus('Loading Stanford Primerize core algorithms...');
-                // Dodajemy katalog główny do sys.path, aby Python traktował folder /primerize jako moduł
-                setStatus('Configuring Python paths...');
+                // Dodajemy katalog bieżący do ścieżki, aby pakiet był widoczny dla importów
                 await pyodide.runPythonAsync(`
                 import sys
-                if '/' not in sys.path:
-                    sys.path.append('/')
-                    print("Python search paths:", sys.path)
+                if "." not in sys.path:
+                    sys.path.append(".")
                     `);
-//                 await pyodide.runPythonAsync(`
-//                 import sys
-//                 if "." not in sys.path:
-//                     sys.path.append(".")
-//                     `);
+
+                // =========================================================================
+                // ZAPIS TWÓJEGO PLIKU: Zapisujemy zawartość run_primerize.py na wirtualny dysk
+                // =========================================================================
+                setStatus('Saving runner script to virtual disk...');
+                pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
+                // =========================================================================
 
                 setPyodideInstance(pyodide);
                 setStatus('Ready');
@@ -106,6 +96,7 @@ export default function PrimerizeWasmPython() {
         initPythonWasm();
     }, []);
 
+
     const handleDesign = async () => {
         if (!sequence.trim() || !pyodideInstance) return;
         setIsLoading(true);
@@ -114,301 +105,30 @@ export default function PrimerizeWasmPython() {
         try {
             pyodideInstance.globals.set("user_sequence", sequence.trim());
 
-            // Wszystkie linie kodu Pythona muszą dotykać lewej krawędzi (brak spacji na początku)
+            // Wywołujemy skrypt jako moduł zaimportowany bezpośrednio z dysku wirtualnego WASM
             const scriptOutput = await pyodideInstance.runPythonAsync(`
-import traceback
-from primerize.primerize_1d import Primerize_1D
+            import run_primerize
+            import importlib
 
-try:
-    p = Primerize_1D()
+            # Przeładowujemy moduł, aby wspierać Hot-Reload w React podczas edycji pliku .py w edytorze
+            importlib.reload(run_primerize)
 
-    # Wywołujemy silnik projektowy, usuwając limit 0 starterów
-    res = p.design(user_sequence, prefix="primer", NUM_PRIMERS=None)
+            # Uruchomienie metody z pliku źródłowego
+            run_primerize.run_design(user_sequence)
+            `);
 
-    output = []
-    output.append("=========================================================================")
-    output.append("          STANFORD PRIMERIZE 1D OUTPUT TERMINAL (WASM ENGINE)            ")
-    output.append("=========================================================================")
-    output.append(f"Input Sequence Length: {len(user_sequence)} bases")
-
-    # Bezpieczne pobranie listy primerów ze struktury Stanforda
-    primers_list = getattr(res, 'primer_set', [])
-    output.append(f"Number of Primers Designed: {len(primers_list)}")
-    output.append("-------------------------------------------------------------------------")
-    output.append(f"{'Oligo Name':<15} | {'Sequence (5\\' to 3\\')':<40} | {'Length':<6}")
-    output.append("-------------------------------------------------------------------------")
-
-    for primer in primers_list:
-        p_name = getattr(primer, 'name', 'unknown')
-        p_seq = getattr(primer, 'seq', '')
-
-        if not p_seq and hasattr(primer, '__str__'):
-            p_seq = str(primer)
-
-        output.append(f"{p_name:<15} | {p_seq:<40} | {len(p_seq):<6}")
-
-    warnings = getattr(res, 'warnings', [])
-    if warnings:
-        output.append("\\n-------------------------------------------------------------------------")
-        output.append("WARNINGS:")
-        for warn in warnings:
-            output.append(f"- {warn}")
-
-    output.append("=========================================================================")
-    result_text = "\\n".join(output)
-
-except Exception as inner_err:
-    result_text = f"Python Core Exception:\\n{traceback.format_exc()}"
-
-result_text
-`);
-
-                        setResults(scriptOutput);
+            setResults(scriptOutput);
         } catch (error: any) {
             console.error(error);
-            setResults(`JavaScript/WASM Bridge Error:\\n${error.message}`);
+            setResults(`JavaScript/WASM Bridge Error:\n${error.message}`);
         } finally {
             setIsLoading(false);
         }
     };
 
 
-/*
-    const handleDesign = async () => {
-        if (!sequence.trim() || !pyodideInstance) return;
-        setIsLoading(true);
-        setResults('');
 
-        try {
-            pyodideInstance.globals.set("user_sequence", sequence.trim());
 
-            const scriptOutput = await pyodideInstance.runPythonAsync(`
-                import traceback
-                from primerize.primerize_1d import Primerize_1D
-
-                try:
-                    p = Primerize_1D()
-
-                    # Wywołujemy silnik projektowy, usuwając limit 0 starterów
-                    res = p.design(user_sequence, prefix="primer", NUM_PRIMERS=None)
-
-                    output = []
-                    output.append("=========================================================================")
-                    output.append("          STANFORD PRIMERIZE 1D OUTPUT TERMINAL (WASM ENGINE)            ")
-                    output.append("=========================================================================")
-                    output.append(f"Input Sequence Length: {len(user_sequence)} bases")
-
-                # Bezpieczne pobranie listy primerów ze struktury Stanforda
-                primers_list = getattr(res, 'primer_set', [])
-                output.append(f"Number of Primers Designed: {len(primers_list)}")
-                output.append("-------------------------------------------------------------------------")
-                output.append(f"{'Oligo Name':<15} | {'Sequence (5\\' to 3\\')':<40} | {'Length':<6}")
-                output.append("-------------------------------------------------------------------------")
-
-                for primer in primers_list:
-                    # Wyciągamy dane tekstowe, sprawdzając obecność atrybutów lub rzutując na tekst
-                    p_name = getattr(primer, 'name', 'unknown')
-                    p_seq = getattr(primer, 'seq', '')
-
-                    # Jeśli obiekt to string lub reprezentacja niestandardowa
-                    if not p_seq and hasattr(primer, '__str__'):
-                        p_seq = str(primer)
-
-                    output.append(f"{p_name:<15} | {p_seq:<40} | {len(p_seq):<6}")
-
-                # Pobranie ewentualnych ostrzeżeń bioinformatycznych
-                warnings = getattr(res, 'warnings', [])
-                if warnings:
-                    output.append("\\n-------------------------------------------------------------------------")
-                    output.append("WARNINGS:")
-                    for warn in warnings:
-                        output.append(f"- {warn}")
-
-                output.append("=========================================================================")
-                result_text = "\\n".join(output)
-
-            except Exception as inner_err:
-                # Jeśli cokolwiek wywali się wewnątrz skryptu Pythona,
-                # przechwytujemy pełny traceback błędu i przekazujemy go do Reacta
-                result_text = f"Python Core Exception:\\n{traceback.format_exc()}"
-
-                result_text
-                            `);
-
-            setResults(scriptOutput);
-        } catch (error: any) {
-            console.error(error);
-            setResults(`JavaScript/WASM Bridge Error:\\n${error.message}`);
-        } finally {
-            setIsLoading(false);
-        }
-    };*/
-
-//     const handleDesign = async () => {
-//         if (!sequence.trim() || !pyodideInstance) return;
-//         setIsLoading(true);
-//         setResults('');
-//
-//         try {
-//             pyodideInstance.globals.set("user_sequence", sequence.trim());
-//
-//             const scriptOutput = await pyodideInstance.runPythonAsync(`
-//             from primerize.primerize_1d import Primerize_1D
-//
-//             p = Primerize_1D()
-//
-//             # Wywołujemy silnik projektowy, usuwając limit 0 starterów
-//             res = p.design(user_sequence, prefix="primer", NUM_PRIMERS=None)
-//
-//             output = []
-//             output.append("=========================================================================")
-//             output.append("          STANFORD PRIMERIZE 1D OUTPUT TERMINAL (WASM ENGINE)            ")
-//             output.append("=========================================================================")
-//             output.append(f"Input Sequence Length: {len(user_sequence)} bases")
-//
-//             # POPRAWKA: Sprawdzamy atrybut primer_set podpowiedziany przez silnik WASM
-//             primers_list = getattr(res, 'primer_set', [])
-//             output.append(f"Number of Primers Designed: {len(primers_list)}")
-//             output.append("-------------------------------------------------------------------------")
-//             output.append(f"{'Oligo Name':<15} | {'Sequence (5\\' to 3\\')':<40} | {'Length':<6}")
-//             output.append("-------------------------------------------------------------------------")
-//
-//             # Iterujemy po strukturach obiektów ze zbioru primer_set
-//             for primer in primers_list:
-//                 # Sprawdzamy czy to obiekt posiadający atrybuty .name i .seq
-//                 if hasattr(primer, 'name') and hasattr(primer, 'seq'):
-//                     output.append(f"{primer.name:<15} | {primer.seq:<40} | {len(primer.seq):<6}")
-//                 # Sprawdzamy czy to słownik
-//                 elif isinstance(primer, dict):
-//                     output.append(f"{primer.get('name', ''):<15} | {primer.get('seq', ''):<40} | {len(primer.get('seq', '')):<6}")
-//                 # Jeśli to obiekt typu tuple (np. [nazwa, sekwencja]) lub inny format tekstowy
-//                 else:
-//                     output.append(f"{str(primer)}")
-//
-//                 if getattr(res, 'warnings', None):
-//                     output.append("\\n-------------------------------------------------------------------------")
-//                     output.append("WARNINGS:")
-//                     for warn in res.warnings:
-//                         output.append(f"- {warn}")
-//
-//                 output.append("=========================================================================")
-//
-//                 "\\n".join(output)
-//             `);
-//
-//                             setResults(scriptOutput);
-//         } catch (error: any) {
-//             console.error(error);
-//             setResults(`Python Execution Error:\n${error.message}`);
-//         } finally {
-//             setIsLoading(false);
-//         }
-//     };
-
-//     const handleDesign = async () => {
-//         if (!sequence.trim() || !pyodideInstance) return;
-//         setIsLoading(true);
-//         setResults('');
-//
-//         try {
-//             pyodideInstance.globals.set("user_sequence", sequence.trim());
-//
-//             const scriptOutput = await pyodideInstance.runPythonAsync(`
-//             from primerize.primerize_1d import Primerize_1D
-//
-//             p = Primerize_1D()
-//
-//             # 1. Wywołujemy design, jawnie przekazując NUM_PRIMERS=None,
-//             # co pozwala algorytmowi automatycznie wyliczyć liczbę oligo.
-//             res = p.design(user_sequence, prefix="primer", NUM_PRIMERS=None)
-//
-//             # 2. Obiekt 'res' (Design_Single) zawiera pola: .primers, .warnings, .assembly
-//             # Budujemy ładny raport tekstowy z wygenerowanych starterów
-//             output = []
-//             output.append("=========================================================================")
-//             output.append("          STANFORD PRIMERIZE 1D OUTPUT TERMINAL (WASM ENGINE)            ")
-//             output.append("=========================================================================")
-//             output.append(f"Input Sequence Length: {len(user_sequence)} bases")
-//             output.append(f"Number of Primers Designed: {len(res.primers)}")
-//             output.append("-------------------------------------------------------------------------")
-//             output.append(f"{'Oligo Name':<15} | {'Sequence (5\\' to 3\\')':<40} | {'Length':<6}")
-//             output.append("-------------------------------------------------------------------------")
-//
-//             # Iterujemy po wygenerowanych przez algorytm starterach
-//             # Zakładamy, że res.primers to lista obiektów lub słowników z polami 'name' i 'seq'
-//             # Jeśli res.primers to zwykła lista struktur, dostosuj poniższy zapis:
-//             for primer in res.primers:
-//                 # Jeśli primer jest obiektem posiadającym atrybuty name i seq:
-//                 if hasattr(primer, 'name') and hasattr(primer, 'seq'):
-//                     output.append(f"{primer.name:<15} | {primer.seq:<40} | {len(primer.seq):<6}")
-//                     # Jeśli primer jest słownikiem:
-//                 elif isinstance(primer, dict):
-//                     output.append(f"{primer.get('name', ''):<15} | {primer.get('seq', ''):<40} | {len(primer.get('seq', '')):<6}")
-//                 # Jeśli primer to krotka/lista (np. [nazwa, sekwencja]):
-//                 else:
-//                     output.append(f"{str(primer)}")
-//
-//             if res.warnings:
-//                 output.append("\\n-------------------------------------------------------------------------")
-//                 output.append("WARNINGS:")
-//                 for warn in res.warnings:
-//                     output.append(f"- {warn}")
-//
-//             output.append("=========================================================================")
-//
-//             "\\n".join(output)
-//         `);
-//
-//                             setResults(scriptOutput);
-//         } catch (error: any) {
-//             console.error(error);
-//             setResults(`Python Execution Error:\n${error.message}`);
-//         } finally {
-//             setIsLoading(false);
-//         }
-//     };
-
-//     const handleDesign = async () => {
-//         if (!sequence.trim() || !pyodideInstance) return;
-//         setIsLoading(true);
-//         setResults('');
-//
-//         try {
-//             // Przekazujemy sekwencję wpisaną przez użytkownika do zmiennej globalnej Pythona
-//             pyodideInstance.globals.set("user_sequence", sequence.trim());
-//
-//             // 3. Wywołujemy prawdziwą logikę Stanford Primerize z wklejonych plików
-//             const scriptOutput = await pyodideInstance.runPythonAsync(`
-//             from primerize.primerize_1d import Primerize_1D
-//
-//             p = Primerize_1D()
-//
-//             # ROZWIĄZANIE: Definiujemy poprawne parametry wejściowe
-//             # Zmieniamy NUM_PRIMERS na None (lub usunięciem wymuszenia 0), aby algorytm sam dobrał liczbę oligo
-//             # Możesz też przekazać parametry jawnie w słowniku, jeśli metoda design przyjmuje kwargs
-//
-//             p.design(user_sequence, prefix="primer")
-//
-//             # W zależności od wersji Primerize, jeśli p.design() resetuje parametry,
-//             # możemy je nadpisać bezpośrednio na obiekcie przed generowaniem raportu:
-//             if hasattr(p, 'num_primers') and p.num_primers == 0:
-//                 p.num_primers = None  # Pozwala algorytmowi automatycznie wyliczyć liczbę starterów
-//
-//                 # Uruchomienie właściwego procesu zapisu/generowania struktur tekstowych, jeśli str(p) nie wyzwala automatycznego designu
-//             if hasattr(p, 'get_oligos'):
-//                 p.get_oligos() # Niektóre wersje wymagają jawnego wywołania przed str(p)
-//
-//             str(p)
-//         `);
-//
-//             setResults(scriptOutput);
-//         } catch (error: any) {
-//             console.error(error);
-//             setResults(`Python Execution Error:\n${error.message}`);
-//         } finally {
-//             setIsLoading(false);
-//         }
-//     };
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
