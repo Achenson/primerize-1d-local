@@ -1,9 +1,10 @@
+import re
 import traceback
 from primerize.primerize_1d import Primerize_1D
 
 
 def run_design(user_sequence):
-    """Executes the Stanford Primerize engine and returns a formatted report string."""
+    """Executes the Stanford Primerize engine and returns a clean, polished report string."""
     try:
         p = Primerize_1D()
         res = p.design(user_sequence, prefix="primer", NUM_PRIMERS=None)
@@ -32,22 +33,30 @@ def run_design(user_sequence):
             "-------------------------------------------------------------------------"
         )
 
-        # POPRAWKA: Ponieważ Stanford zwraca listę czystych tekstów (sekwencji),
-        # odczytujemy tekst bezpośrednio ze zmiennej `primer`
         for i, primer in enumerate(primers_list):
             p_id = f"primer_oligo_{i+1}"
             p_seq = str(primer).strip().upper()
-
             output.append(f"{p_id:<15} | {p_seq:<42} | {len(p_seq):<6}")
 
-        warnings = getattr(res, "warnings", [])
-        if warnings:
-            output.append(
-                "\n-------------------------------------------------------------------------"
-            )
-            output.append("WARNINGS:")
-            for warn in warnings:
-                output.append(f"- {warn}")
+        # POBIERANIE I OCZYSZCZANIE OSTRZEŻEŃ Z KODÓW ANSI ([93m, [0m itd.)
+        try:
+            warnings_text = res.echo("WARNING")
+            warnings_text = str(warnings_text).strip()
+
+            if warnings_text and warnings_text != "None":
+                # Wyrażenie regularne usuwające sekwencje sterujące kolorami terminala
+                ansi_escape = re.compile(
+                    r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|\[\d+m"
+                )
+                clean_warnings = ansi_escape.sub("", warnings_text)
+
+                output.append(
+                    "\n-------------------------------------------------------------------------"
+                )
+                output.append("WARNINGS & MISPRIMING ALERTS:")
+                output.append(clean_warnings)
+        except Exception:
+            pass
 
         output.append(
             "========================================================================="
