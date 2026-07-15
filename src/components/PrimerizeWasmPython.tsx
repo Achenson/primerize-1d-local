@@ -13,10 +13,10 @@ export default function PrimerizeWasmPython() {
     const [status, setStatus] = useState<string>('Booting WebAssembly Python engine...');
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [maxLength, setMaxLength] = useState<number>(60);
-
-    // NEW STATE: Captures local client-side validation errors
     const [validationError, setValidationError] = useState<string>('');
+
+    // NAPRAWIONO: Zmiana typu na string eliminuje błąd [PARSE_ERROR] w kompilatorze oxc
+    const [maxLength, setMaxLength] = useState<number | string>(60);
 
     useEffect(() => {
         async function initPythonWasm() {
@@ -84,17 +84,23 @@ export default function PrimerizeWasmPython() {
         initPythonWasm();
     }, []);
 
+    // Przywraca minimalną lub maksymalną bezpieczną granicę po kliknięciu poza pole
+    const handleBlurMaxLength = () => {
+        if (maxLength === '' || Number(maxLength) < 15) {
+            setMaxLength(15);
+        } else if (Number(maxLength) > 120) {
+            setMaxLength(120);
+        }
+    };
+
     const handleDesign = async () => {
-        // .trim() automatically removes all spaces/newlines from the beginning and the end
         const cleanSeq = sequence.trim();
         if (!cleanSeq || !pyodideInstance) return;
 
         setValidationError('');
         setResults('');
 
-        // 1. STRICT NUCLEOTIDE VALIDATION
-        // Since leading/trailing spaces are already trimmed, the sequence
-        // must consist strictly of A, C, G, T, or U from start to finish.
+        // 1. RESTRYKCYJNA WALIDACJA ZNAKÓW
         const upperSeq = cleanSeq.toUpperCase();
         const strictPureRegex = /^[ACGTU]+$/;
 
@@ -103,8 +109,7 @@ export default function PrimerizeWasmPython() {
             return;
         }
 
-        // 2. LENGTH VALIDATION
-        // Since there are no internal spaces, cleanSeq.length represents the exact bp count
+        // 2. WALIDACJA DŁUGOŚCI SEKWENCJI
         const seqLength = cleanSeq.length;
         if (seqLength < 60) {
             setValidationError(`Sequence too short (${seqLength} bp). Minimum length required is 60 bp.`);
@@ -113,6 +118,12 @@ export default function PrimerizeWasmPython() {
         if (seqLength > 1000) {
             setValidationError(`Sequence too long (${seqLength} bp). Maximum allowed size is 1000 bp.`);
             return;
+        }
+
+        // 3. SANITYZACJA PARAMETRU PRZED PRZEKAZANIEM DO SILNIKA
+        const operationalMaxLength = maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
+        if (maxLength !== operationalMaxLength) {
+            setMaxLength(operationalMaxLength);
         }
 
         setIsLoading(true);
@@ -126,7 +137,7 @@ export default function PrimerizeWasmPython() {
 
             importlib.reload(run_primerize)
 
-            run_primerize.run_design(user_sequence, ${maxLength})
+            run_primerize.run_design(user_sequence, ${operationalMaxLength})
             `);
 
             setResults(scriptOutput);
@@ -137,7 +148,6 @@ export default function PrimerizeWasmPython() {
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
@@ -160,7 +170,18 @@ export default function PrimerizeWasmPython() {
         type="number"
         className="w-24 p-2 border border-slate-300 rounded font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white"
         value={maxLength}
-        onChange={(e) => setMaxLength(Math.max(15, Number(e.target.value)))}
+        onChange={(e) => {
+            const val = e.target.value;
+            if (val === '') {
+                setMaxLength('');
+                return;
+            }
+            const numVal = Number(val);
+            if (val.length === 1 || numVal <= 120) {
+                setMaxLength(numVal);
+            }
+        }}
+        onBlur={handleBlurMaxLength}
         min={15}
         max={120}
         disabled={status !== 'Ready' || isLoading}
@@ -175,12 +196,11 @@ export default function PrimerizeWasmPython() {
         <label className="block text-sm font-medium text-slate-700 mb-1">Sequence Input</label>
         <textarea
         className="w-full p-2 border border-slate-300 rounded font-mono text-sm h-32 focus:ring-1 focus:ring-blue-500 outline-none"
-        // UPDATED: Dynamic context placeholder informing users about constraints
         placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"
         value={sequence}
         onChange={(e) => {
             setSequence(e.target.value);
-            if (validationError) setValidationError(''); // Clear warning on type
+            if (validationError) setValidationError('');
         }}
         disabled={status !== 'Ready' || isLoading}
         />
@@ -194,7 +214,6 @@ export default function PrimerizeWasmPython() {
         {isLoading ? 'Running Optimization Engine...' : 'Calculate Primers'}
         </button>
 
-        {/* NEW: Displays interactive frontend range errors nicely styled */}
         {validationError && (
             <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium rounded">
             ⚠️ {validationError}
