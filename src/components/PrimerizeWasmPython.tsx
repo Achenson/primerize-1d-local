@@ -85,14 +85,26 @@ export default function PrimerizeWasmPython() {
     }, []);
 
     const handleDesign = async () => {
+        // .trim() automatically removes all spaces/newlines from the beginning and the end
         const cleanSeq = sequence.trim();
         if (!cleanSeq || !pyodideInstance) return;
 
-        // Reset old outputs and errors
         setValidationError('');
         setResults('');
 
-        // FRONTEND VALIDATION CHECK
+        // 1. STRICT NUCLEOTIDE VALIDATION
+        // Since leading/trailing spaces are already trimmed, the sequence
+        // must consist strictly of A, C, G, T, or U from start to finish.
+        const upperSeq = cleanSeq.toUpperCase();
+        const strictPureRegex = /^[ACGTU]+$/;
+
+        if (!strictPureRegex.test(upperSeq)) {
+            setValidationError('Invalid sequence format. Internal spaces, numbers, or special characters are not allowed. Use only A, C, G, T, or U.');
+            return;
+        }
+
+        // 2. LENGTH VALIDATION
+        // Since there are no internal spaces, cleanSeq.length represents the exact bp count
         const seqLength = cleanSeq.length;
         if (seqLength < 60) {
             setValidationError(`Sequence too short (${seqLength} bp). Minimum length required is 60 bp.`);
@@ -125,6 +137,7 @@ export default function PrimerizeWasmPython() {
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
