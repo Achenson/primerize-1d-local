@@ -13,9 +13,10 @@ export default function PrimerizeWasmPython() {
     const [status, setStatus] = useState<string>('Booting WebAssembly Python engine...');
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    // Nowy stan przechowujący wybraną maksymalną długość starterów (domyślnie 60)
     const [maxLength, setMaxLength] = useState<number>(60);
+
+    // NEW STATE: Captures local client-side validation errors
+    const [validationError, setValidationError] = useState<string>('');
 
     useEffect(() => {
         async function initPythonWasm() {
@@ -84,14 +85,29 @@ export default function PrimerizeWasmPython() {
     }, []);
 
     const handleDesign = async () => {
-        if (!sequence.trim() || !pyodideInstance) return;
-        setIsLoading(true);
+        const cleanSeq = sequence.trim();
+        if (!cleanSeq || !pyodideInstance) return;
+
+        // Reset old outputs and errors
+        setValidationError('');
         setResults('');
 
-        try {
-            pyodideInstance.globals.set("user_sequence", sequence.trim());
+        // FRONTEND VALIDATION CHECK
+        const seqLength = cleanSeq.length;
+        if (seqLength < 60) {
+            setValidationError(`Sequence too short (${seqLength} bp). Minimum length required is 60 bp.`);
+            return;
+        }
+        if (seqLength > 1000) {
+            setValidationError(`Sequence too long (${seqLength} bp). Maximum allowed size is 1000 bp.`);
+            return;
+        }
 
-            // Przekazujemy aktualną wartość maxLength z Reacta bezpośrednio do funkcji Pythona
+        setIsLoading(true);
+
+        try {
+            pyodideInstance.globals.set("user_sequence", cleanSeq);
+
             const scriptOutput = await pyodideInstance.runPythonAsync(`
             import run_primerize
             import importlib
@@ -122,7 +138,6 @@ export default function PrimerizeWasmPython() {
         </div>
         </header>
 
-        {/* Nowe pole wyboru maksymalnej długości starterów */}
         <div className="flex flex-col gap-1.5 p-3 bg-slate-50 border border-slate-200 rounded">
         <label className="block text-sm font-semibold text-slate-700">
         Maximum Oligo Length (bp)
@@ -147,9 +162,13 @@ export default function PrimerizeWasmPython() {
         <label className="block text-sm font-medium text-slate-700 mb-1">Sequence Input</label>
         <textarea
         className="w-full p-2 border border-slate-300 rounded font-mono text-sm h-32 focus:ring-1 focus:ring-blue-500 outline-none"
-        placeholder="Paste ATCG sequence here..."
+        // UPDATED: Dynamic context placeholder informing users about constraints
+        placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"
         value={sequence}
-        onChange={(e) => setSequence(e.target.value)}
+        onChange={(e) => {
+            setSequence(e.target.value);
+            if (validationError) setValidationError(''); // Clear warning on type
+        }}
         disabled={status !== 'Ready' || isLoading}
         />
         </div>
@@ -161,6 +180,13 @@ export default function PrimerizeWasmPython() {
         >
         {isLoading ? 'Running Optimization Engine...' : 'Calculate Primers'}
         </button>
+
+        {/* NEW: Displays interactive frontend range errors nicely styled */}
+        {validationError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium rounded">
+            ⚠️ {validationError}
+            </div>
+        )}
 
         <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Results Output</label>
