@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-// 1. Import the python code directly as a raw string!
-import primerizeRunnerScript from '../python/run_primerize.py?raw'
+import primerizeRunnerScript from '../python/run_primerize.py?raw';
 
 declare global {
     interface Window {
@@ -14,10 +13,13 @@ export default function PrimerizeWasmPython() {
     const [status, setStatus] = useState<string>('Booting WebAssembly Python engine...');
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
+
+    // Nowy stan przechowujący wybraną maksymalną długość starterów (domyślnie 60)
+    const [maxLength, setMaxLength] = useState<number>(60);
+
     useEffect(() => {
         async function initPythonWasm() {
             try {
-                // 1. Jeśli skryptu Pyodide nie ma jeszcze w oknie, wstrzykujemy go dynamicznie z CDN
                 if (!window.loadPyodide) {
                     setStatus('Loading Pyodide script library into page thread...');
                     const script = document.createElement('script');
@@ -35,55 +37,40 @@ export default function PrimerizeWasmPython() {
                 const pyodide = await window.loadPyodide();
 
                 setStatus('Loading core scientific math packages & package manager...');
-                // Ładujemy podstawowe środowiska oraz micropip
                 await pyodide.loadPackage(["numpy", "matplotlib", "micropip"]);
 
                 setStatus('Installing missing Excel dependency (xlwt)...');
-                // Dynamiczna instalacja brakującej biblioteki xlwt z repozytorium PyPI
                 await pyodide.runPythonAsync(`
                 import micropip
                 await micropip.install('xlwt')
                 `);
 
                 setStatus('Creating virtual filesystem for Stanford Primerize...');
-                try {
-                    pyodide.FS.mkdir('primerize');
-                } catch (e) {
-                    // Ignoruj błąd, jeśli folder już istnieje
-                }
+                try { pyodide.FS.mkdir('primerize'); } catch (e) {}
 
-                // Pełna lista plików z Twojego folderu public/primerize
                 const primerizeFiles = [
                     '__init__.py', 'misprime.py', 'primerize_1d.py', 'primerize_2d.py',
                     'primerize_3d.py', 'primerize_custom.py', 'thermo.py', 'util.py',
                     'util_class.py', 'util_func.py', 'util_server.py', 'wrapper.py'
                 ];
 
-                // Pobieramy wszystkie pliki ze Stanforda z katalogu publicznego
                 for (const file of primerizeFiles) {
                     setStatus(`Loading ${file} into WASM filesystem...`);
                     const response = await fetch(`/primerize/${file}`);
-                    if (!response.ok) {
-                        throw new Error(`Nie udało się pobrać pliku z folderu public: /primerize/${file}`);
-                    }
+                    if (!response.ok) throw new Error(`Failed to download public asset: ${file}`);
                     const fileContent = await response.text();
                     pyodide.FS.writeFile(`primerize/${file}`, fileContent);
                 }
 
                 setStatus('Loading Stanford Primerize core algorithms...');
-                // Dodajemy katalog bieżący do ścieżki, aby pakiet był widoczny dla importów
                 await pyodide.runPythonAsync(`
                 import sys
                 if "." not in sys.path:
                     sys.path.append(".")
                     `);
 
-                // =========================================================================
-                // ZAPIS TWÓJEGO PLIKU: Zapisujemy zawartość run_primerize.py na wirtualny dysk
-                // =========================================================================
                 setStatus('Saving runner script to virtual disk...');
                 pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
-                // =========================================================================
 
                 setPyodideInstance(pyodide);
                 setStatus('Ready');
@@ -96,7 +83,6 @@ export default function PrimerizeWasmPython() {
         initPythonWasm();
     }, []);
 
-
     const handleDesign = async () => {
         if (!sequence.trim() || !pyodideInstance) return;
         setIsLoading(true);
@@ -105,16 +91,14 @@ export default function PrimerizeWasmPython() {
         try {
             pyodideInstance.globals.set("user_sequence", sequence.trim());
 
-            // Wywołujemy skrypt jako moduł zaimportowany bezpośrednio z dysku wirtualnego WASM
+            // Przekazujemy aktualną wartość maxLength z Reacta bezpośrednio do funkcji Pythona
             const scriptOutput = await pyodideInstance.runPythonAsync(`
             import run_primerize
             import importlib
 
-            # Przeładowujemy moduł, aby wspierać Hot-Reload w React podczas edycji pliku .py w edytorze
             importlib.reload(run_primerize)
 
-            # Uruchomienie metody z pliku źródłowego
-            run_primerize.run_design(user_sequence)
+            run_primerize.run_design(user_sequence, ${maxLength})
             `);
 
             setResults(scriptOutput);
@@ -125,10 +109,6 @@ export default function PrimerizeWasmPython() {
             setIsLoading(false);
         }
     };
-
-
-
-
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
@@ -141,6 +121,27 @@ export default function PrimerizeWasmPython() {
         </span>
         </div>
         </header>
+
+        {/* Nowe pole wyboru maksymalnej długości starterów */}
+        <div className="flex flex-col gap-1.5 p-3 bg-slate-50 border border-slate-200 rounded">
+        <label className="block text-sm font-semibold text-slate-700">
+        Maximum Oligo Length (bp)
+        </label>
+        <div className="flex items-center gap-2">
+        <input
+        type="number"
+        className="w-24 p-2 border border-slate-300 rounded font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white"
+        value={maxLength}
+        onChange={(e) => setMaxLength(Math.max(15, Number(e.target.value)))}
+        min={15}
+        max={120}
+        disabled={status !== 'Ready' || isLoading}
+        />
+        <span className="text-xs text-slate-500 italic">
+        Allowed range: 15 to 120 bp.
+        </span>
+        </div>
+        </div>
 
         <div>
         <label className="block text-sm font-medium text-slate-700 mb-1">Sequence Input</label>
