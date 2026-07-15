@@ -1,5 +1,5 @@
-import traceback
 import sys
+import traceback
 from types import ModuleType
 
 # =========================================================================
@@ -47,8 +47,15 @@ def run_design(user_sequence, max_length=60):
         output.append(f"{'Oligo Name':<15} | {'Sequence (5` to 3`)':<42} | {'Length':<6}")
         output.append("-------------------------------------------------------------------------")
 
+        # Określamy punkt podziału: Stanford dzieli listę dokładnie na pół (pierwsza połowa to F, druga to R)
+        total_primers = len(primers_list)
+        half = total_primers // 2
+
         for i, primer in enumerate(primers_list):
-            p_id = f"primer_oligo_{i+1}"
+            # Dynamiczne przypisywanie kierunku F lub R na podstawie indeksu z oryginalnej listy
+            direction = "F" if i < half else "R"
+            p_id = f"{i+1}{direction}"
+
             p_seq = str(primer).strip().upper()
             output.append(f"{p_id:<15} | {p_seq:<42} | {len(p_seq):<6}")
 
