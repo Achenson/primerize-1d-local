@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import primerizeRunnerScript from '../python/run_primerize.py?raw';
-import { executePrimerizeDesign } from '../utils/executePrimerizeDesign.ts';
+import { executePrimerizeDesign } from '../utils/executePrimerizeDesign';
 
+// Import newly separated UI sub-components
+import Settings from './Settings';
+import SequenceInput from './SequenceInput';
+import Notifications from './Notifications';
+import Results from './Results';
 
 declare global {
     interface Window {
@@ -16,9 +21,9 @@ export default function PrimerizeWasmPython() {
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [validationError, setValidationError] = useState<string>('');
-
-    // NAPRAWIONO: Zmiana typu na string eliminuje błąd [PARSE_ERROR] w kompilatorze oxc
     const [maxLength, setMaxLength] = useState<number | string>(60);
+
+    const isReady = status === 'Ready';
 
     useEffect(() => {
         async function initPythonWasm() {
@@ -86,45 +91,29 @@ export default function PrimerizeWasmPython() {
         initPythonWasm();
     }, []);
 
-    // Przywraca minimalną lub maksymalną bezpieczną granicę po kliknięciu poza pole
-    const handleBlurMaxLength = () => {
-        if (maxLength === '' || Number(maxLength) < 15) {
-            setMaxLength(15);
-        } else if (Number(maxLength) > 120) {
-            setMaxLength(120);
-        }
-    };
-
     const handleDesign = async () => {
-        // Resetujemy widok przed nowym kliknięciem
         setValidationError('');
         setResults('');
         setIsLoading(true);
 
         try {
-            // Wywołujemy całą przeniesioną logikę z pliku utils
             const { scriptOutput, operationalMaxLength } = await executePrimerizeDesign({
                 sequence,
                 maxLength,
                 pyodideInstance
             });
 
-            // Zapisujemy wyniki do wyświetlenia w zielonym oknie
             setResults(scriptOutput);
 
-            // Jeśli użytkownik miał puste pole, synchronizujemy cyfrę w UI
             if (maxLength !== operationalMaxLength) {
                 setMaxLength(operationalMaxLength);
             }
         } catch (error: any) {
-            // Jeśli utils rzuci błąd walidacji lub błąd Pythona, złapiemy go tutaj i wyświetlimy w różowym pasku
             setValidationError(error.message);
         } finally {
-            // Niezależnie od wyniku, wyłączamy animację ładowania silnika
             setIsLoading(false);
         }
     };
-
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
@@ -132,77 +121,31 @@ export default function PrimerizeWasmPython() {
         <h1 className="text-xl font-bold text-slate-800">Primerize (Python WASM)</h1>
         <div className="text-xs mt-1">
         <span className="font-semibold text-slate-600">Engine Status: </span>
-        <span className={status === 'Ready' ? 'text-emerald-600 font-bold' : 'text-amber-600 animate-pulse'}>
+        <span className={isReady ? 'text-emerald-600 font-bold' : 'text-amber-600 animate-pulse'}>
         {status}
         </span>
         </div>
         </header>
 
-        <div className="flex flex-col gap-1.5 p-3 bg-slate-50 border border-slate-200 rounded">
-        <label className="block text-sm font-semibold text-slate-700">
-        Maximum Oligo Length (bp)
-        </label>
-        <div className="flex items-center gap-2">
-        <input
-        type="number"
-        className="w-24 p-2 border border-slate-300 rounded font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white"
-        value={maxLength}
-        onChange={(e) => {
-            const val = e.target.value;
-            if (val === '') {
-                setMaxLength('');
-                return;
-            }
-            const numVal = Number(val);
-            if (val.length === 1 || numVal <= 120) {
-                setMaxLength(numVal);
-            }
-        }}
-        onBlur={handleBlurMaxLength}
-        min={15}
-        max={120}
-        disabled={status !== 'Ready' || isLoading}
+        <Settings
+        maxLength={maxLength}
+        setMaxLength={setMaxLength}
+        engineReady={isReady}
+        isLoading={isLoading}
         />
-        <span className="text-xs text-slate-500 italic">
-        Allowed range: 15 to 120 bp.
-        </span>
-        </div>
-        </div>
 
-        <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Sequence Input</label>
-        <textarea
-        className="w-full p-2 border border-slate-300 rounded font-mono text-sm h-32 focus:ring-1 focus:ring-blue-500 outline-none"
-        placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"
-        value={sequence}
-        onChange={(e) => {
-            setSequence(e.target.value);
-            if (validationError) setValidationError('');
-        }}
-        disabled={status !== 'Ready' || isLoading}
+        <SequenceInput
+        sequence={sequence}
+        setSequence={setSequence}
+        onCalculate={handleDesign}
+        engineReady={isReady}
+        isLoading={isLoading}
+        clearError={() => setValidationError('')}
         />
-        </div>
 
-        <button
-        onClick={handleDesign}
-        disabled={status !== 'Ready' || !sequence.trim() || isLoading}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition-colors disabled:bg-slate-300"
-        >
-        {isLoading ? 'Running Optimization Engine...' : 'Calculate Primers'}
-        </button>
+        <Notifications error={validationError} />
 
-        {validationError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 text-sm font-medium rounded">
-            ⚠️ {validationError}
-            </div>
-        )}
-
-        <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Results Output</label>
-        <pre className="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded min-h-[150px] max-h-80 overflow-y-auto whitespace-pre-wrap">
-        {results ? results : <span className="text-slate-500 italic">No output yet. Enter sequence and run.</span>}
-        </pre>
-        </div>
+        <Results results={results} />
         </div>
     );
 }
