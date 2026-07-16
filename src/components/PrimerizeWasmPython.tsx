@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import primerizeRunnerScript from '../python/run_primerize.py?raw';
+import { executePrimerizeDesign } from '../utils/executePrimerizeDesign.ts';
+
 
 declare global {
     interface Window {
@@ -94,60 +96,35 @@ export default function PrimerizeWasmPython() {
     };
 
     const handleDesign = async () => {
-        const cleanSeq = sequence.trim();
-        if (!cleanSeq || !pyodideInstance) return;
-
+        // Resetujemy widok przed nowym kliknięciem
         setValidationError('');
         setResults('');
-
-        // 1. RESTRYKCYJNA WALIDACJA ZNAKÓW
-        const upperSeq = cleanSeq.toUpperCase();
-        const strictPureRegex = /^[ACGTU]+$/;
-
-        if (!strictPureRegex.test(upperSeq)) {
-            setValidationError('Invalid sequence format. Internal spaces, numbers, or special characters are not allowed. Use only A, C, G, T, or U.');
-            return;
-        }
-
-        // 2. WALIDACJA DŁUGOŚCI SEKWENCJI
-        const seqLength = cleanSeq.length;
-        if (seqLength < 60) {
-            setValidationError(`Sequence too short (${seqLength} bp). Minimum length required is 60 bp.`);
-            return;
-        }
-        if (seqLength > 1000) {
-            setValidationError(`Sequence too long (${seqLength} bp). Maximum allowed size is 1000 bp.`);
-            return;
-        }
-
-        // 3. SANITYZACJA PARAMETRU PRZED PRZEKAZANIEM DO SILNIKA
-        const operationalMaxLength = maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
-        if (maxLength !== operationalMaxLength) {
-            setMaxLength(operationalMaxLength);
-        }
-
         setIsLoading(true);
 
         try {
-            pyodideInstance.globals.set("user_sequence", cleanSeq);
+            // Wywołujemy całą przeniesioną logikę z pliku utils
+            const { scriptOutput, operationalMaxLength } = await executePrimerizeDesign({
+                sequence,
+                maxLength,
+                pyodideInstance
+            });
 
-            const scriptOutput = await pyodideInstance.runPythonAsync(`
-            import run_primerize
-            import importlib
-
-            importlib.reload(run_primerize)
-
-            run_primerize.run_design(user_sequence, ${operationalMaxLength})
-            `);
-
+            // Zapisujemy wyniki do wyświetlenia w zielonym oknie
             setResults(scriptOutput);
+
+            // Jeśli użytkownik miał puste pole, synchronizujemy cyfrę w UI
+            if (maxLength !== operationalMaxLength) {
+                setMaxLength(operationalMaxLength);
+            }
         } catch (error: any) {
-            console.error(error);
-            setResults(`JavaScript/WASM Bridge Error:\n${error.message}`);
+            // Jeśli utils rzuci błąd walidacji lub błąd Pythona, złapiemy go tutaj i wyświetlimy w różowym pasku
+            setValidationError(error.message);
         } finally {
+            // Niezależnie od wyniku, wyłączamy animację ładowania silnika
             setIsLoading(false);
         }
     };
+
 
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
