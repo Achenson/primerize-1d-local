@@ -53,6 +53,11 @@ export async function executePrimerizeDesign({ sequence, maxLength, pyodideInsta
     run_primerize.run_design(user_sequence, ${operationalMaxLength})
     `);
 
-    // Zwracamy spakowany wynik oraz ostateczną długość
+    // UNIWERSALNY WARUNEK: Jeśli silnik zwraca 0, oznacza to konflikt dowolnych parametrów wejściowych
+    if (scriptOutput.includes('Number of Primers Designed: 0')) {
+        throw new Error('No valid assembly found. Please adjust your design parameters.');
+    }
+
     return { scriptOutput, operationalMaxLength };
+
 }
