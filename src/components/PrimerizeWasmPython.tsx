@@ -1,95 +1,24 @@
-import React, { useState, useEffect } from 'react';
-import primerizeRunnerScript from '../python/run_primerize.py?raw';
+import React, { useState } from 'react';
 import { executePrimerizeDesign } from '../utils/executePrimerizeDesign';
+// Import the custom initialization hook
+import { usePrimerizeEngine } from '../hooks/usePrimerizeEngine';
 
-// Import newly separated UI sub-components
+// Import UI sub-components
 import Settings from './Settings';
 import SequenceInput from './SequenceInput';
 import Notifications from './Notifications';
 import Results from './Results';
 
-declare global {
-    interface Window {
-        loadPyodide: any;
-    }
-}
-
 export default function PrimerizeWasmPython() {
     const [sequence, setSequence] = useState<string>('');
     const [results, setResults] = useState<string>('');
-    const [status, setStatus] = useState<string>('Booting WebAssembly Python engine...');
-    const [pyodideInstance, setPyodideInstance] = useState<any>(null);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [validationError, setValidationError] = useState<string>('');
     const [maxLength, setMaxLength] = useState<number | string>(60);
 
+    // CONSUME THE CUSTOM HOOK
+    const { status, pyodideInstance, isLoadingEngine } = usePrimerizeEngine();
     const isReady = status === 'Ready';
-
-    useEffect(() => {
-        async function initPythonWasm() {
-            try {
-                if (!window.loadPyodide) {
-                    setStatus('Loading Pyodide script library into page thread...');
-                    const script = document.createElement('script');
-                    script.src = 'https://jsdelivr.net';
-                    script.async = true;
-
-                    await new Promise((resolve, reject) => {
-                        script.onload = resolve;
-                        script.onerror = () => reject(new Error('Failed to download CDN script asset'));
-                        document.head.appendChild(script);
-                    });
-                }
-
-                setStatus('Booting WebAssembly Python engine...');
-                const pyodide = await window.loadPyodide();
-
-                setStatus('Loading core scientific math packages & package manager...');
-                await pyodide.loadPackage(["numpy", "matplotlib", "micropip"]);
-
-                setStatus('Installing missing Excel dependency (xlwt)...');
-                await pyodide.runPythonAsync(`
-                import micropip
-                await micropip.install('xlwt')
-                `);
-
-                setStatus('Creating virtual filesystem for Stanford Primerize...');
-                try { pyodide.FS.mkdir('primerize'); } catch (e) {}
-
-                const primerizeFiles = [
-                    '__init__.py', 'misprime.py', 'primerize_1d.py', 'primerize_2d.py',
-                    'primerize_3d.py', 'primerize_custom.py', 'thermo.py', 'util.py',
-                    'util_class.py', 'util_func.py', 'util_server.py', 'wrapper.py'
-                ];
-
-                for (const file of primerizeFiles) {
-                    setStatus(`Loading ${file} into WASM filesystem...`);
-                    const response = await fetch(`/primerize/${file}`);
-                    if (!response.ok) throw new Error(`Failed to download public asset: ${file}`);
-                    const fileContent = await response.text();
-                    pyodide.FS.writeFile(`primerize/${file}`, fileContent);
-                }
-
-                setStatus('Loading Stanford Primerize core algorithms...');
-                await pyodide.runPythonAsync(`
-                import sys
-                if "." not in sys.path:
-                    sys.path.append(".")
-                    `);
-
-                setStatus('Saving runner script to virtual disk...');
-                pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
-
-                setPyodideInstance(pyodide);
-                setStatus('Ready');
-            } catch (err: any) {
-                console.error(err);
-                setStatus(`Failed to launch Python WebAssembly: ${err.message}`);
-            }
-        }
-
-        initPythonWasm();
-    }, []);
 
     const handleDesign = async () => {
         setValidationError('');
@@ -139,7 +68,7 @@ export default function PrimerizeWasmPython() {
         setSequence={setSequence}
         onCalculate={handleDesign}
         engineReady={isReady}
-        isLoading={isLoading}
+        isLoading={isLoading || isLoadingEngine}
         clearError={() => setValidationError('')}
         />
 
