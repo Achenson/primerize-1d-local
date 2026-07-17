@@ -40,7 +40,8 @@ export default function Settings({ maxLength, setMaxLength, engineReady, isLoadi
         onBlur={handleBlurMaxLength}
         min={15}
         max={120}
-        disabled={!engineReady || isLoading}
+//         disabled={!engineReady || isLoading}
+        disabled={isLoading}
         />
         <span className="text-xs text-slate-500 italic">
         Allowed range: 15 to 120 bp.

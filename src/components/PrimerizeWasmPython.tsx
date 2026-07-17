@@ -68,7 +68,8 @@ export default function PrimerizeWasmPython() {
         setSequence={setSequence}
         onCalculate={handleDesign}
         engineReady={isReady}
-        isLoading={isLoading || isLoadingEngine}
+//         isLoading={isLoading || isLoadingEngine}
+        isLoading={isLoading}
         clearError={() => setValidationError('')}
         />
 

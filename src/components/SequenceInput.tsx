@@ -22,7 +22,8 @@ export default function SequenceInput({ sequence, setSequence, onCalculate, engi
             setSequence(e.target.value);
             clearError();
         }}
-        disabled={!engineReady || isLoading}
+//         disabled={!engineReady || isLoading}
+        disabled={isLoading}
         />
         </div>
 
