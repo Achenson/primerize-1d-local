@@ -1,8 +1,9 @@
-// src/utils/primerizeUtil.ts
+// src/utils/executePrimerizeDesign.ts
 
 interface DesignParams {
     sequence: string;
     maxLength: number | string;
+    prefix: string; // NEW PARAMETER
     pyodideInstance: any;
 }
 
@@ -11,7 +12,7 @@ interface DesignResult {
     operationalMaxLength: number;
 }
 
-export async function executePrimerizeDesign({ sequence, maxLength, pyodideInstance }: DesignParams): Promise<DesignResult> {
+export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyodideInstance }: DesignParams): Promise<DesignResult> {
     const cleanSeq = sequence.trim();
 
     if (!cleanSeq) {
@@ -21,15 +22,14 @@ export async function executePrimerizeDesign({ sequence, maxLength, pyodideInsta
         throw new Error('Python WebAssembly engine is not initialized.');
     }
 
-    // 1. RESTRYKCYJNA WALIDACJA ZNAKÓW
+    // 1. STRICT NUCLEOTIDE VALIDATION
     const upperSeq = cleanSeq.toUpperCase();
     const strictPureRegex = /^[ACGTU]+$/;
-
     if (!strictPureRegex.test(upperSeq)) {
         throw new Error('Invalid sequence format. Internal spaces, numbers, or special characters are not allowed. Use only A, C, G, T, or U.');
     }
 
-    // 2. WALIDACJA DŁUGOŚCI SEKWENCJI
+    // 2. LENGTH VALIDATION
     const seqLength = cleanSeq.length;
     if (seqLength < 60) {
         throw new Error(`Sequence too short (${seqLength} bp). Minimum length required is 60 bp.`);
@@ -41,7 +41,10 @@ export async function executePrimerizeDesign({ sequence, maxLength, pyodideInsta
     // 3. SANITYZACJA PARAMETRU PRZED PRZEKAZANIEM DO SILNIKA
     const operationalMaxLength = maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
 
-    // 4. WYWOŁANIE MOSTEK PYTHON / WEBASSEMBLY
+    // 4. SANITIZE CONSTRUCT PREFIX (Stanford Rules)
+    const activePrefix = prefix.trim() === '' ? 'primer' : prefix.trim();
+
+    // 5. WYWOŁANIE MOSTEK PYTHON / WEBASSEMBLY
     pyodideInstance.globals.set("user_sequence", cleanSeq);
 
     const scriptOutput = await pyodideInstance.runPythonAsync(`
@@ -50,14 +53,13 @@ export async function executePrimerizeDesign({ sequence, maxLength, pyodideInsta
 
     importlib.reload(run_primerize)
 
-    run_primerize.run_design(user_sequence, ${operationalMaxLength})
+    # Pass the custom active prefix directly to your backend design routine
+    run_primerize.run_design(user_sequence, ${operationalMaxLength}, prefix="${activePrefix}")
     `);
 
-    // UNIWERSALNY WARUNEK: Jeśli silnik zwraca 0, oznacza to konflikt dowolnych parametrów wejściowych
     if (scriptOutput.includes('Number of Primers Designed: 0')) {
-        throw new Error('No valid assembly found. Please adjust your design parameters.');
+        throw new Error('No valid assembly found. The engine cannot satisfy the current thermodynamic constraints. Please check and adjust your design parameters (e.g., increase oligo length or relax temperature limits).');
     }
 
     return { scriptOutput, operationalMaxLength };
-
 }

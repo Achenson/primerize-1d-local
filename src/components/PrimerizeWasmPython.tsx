@@ -11,6 +11,7 @@ import Results from './Results';
 
 export default function PrimerizeWasmPython() {
     const [sequence, setSequence] = useState<string>('');
+    const [prefix, setPrefix] = useState<string>(''); // NEW CONSTRUCT NAME STATE
     const [results, setResults] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [validationError, setValidationError] = useState<string>('');
@@ -29,6 +30,7 @@ export default function PrimerizeWasmPython() {
             const { scriptOutput, operationalMaxLength } = await executePrimerizeDesign({
                 sequence,
                 maxLength,
+                prefix,
                 pyodideInstance
             });
 
@@ -66,6 +68,8 @@ export default function PrimerizeWasmPython() {
         <SequenceInput
         sequence={sequence}
         setSequence={setSequence}
+        prefix={prefix}
+        setPrefix={setPrefix}
         onCalculate={handleDesign}
         engineReady={isReady}
 //         isLoading={isLoading || isLoadingEngine}
