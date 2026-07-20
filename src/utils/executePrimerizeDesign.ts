@@ -31,6 +31,30 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
         cleanSeq = T7_PROMOTER + cleanSeq;
     }
 
+    // NEW FRONTEND-ONLY T7 INITIATION Gs CHECK (Stanford Rule Replication)
+    let t7GWarning = "";
+    if (cleanSeq.startsWith(T7_PROMOTER)) {
+        // Extract the 3 bases immediately following the 20-bp T7 promoter site
+        const initiationBases = cleanSeq.substring(T7_PROMOTER.length, T7_PROMOTER.length + 3);
+
+        // Count consecutive 'G's starting right after the promoter split point
+        let gCount = 0;
+        for (let i = 0; i < initiationBases.length; i++) {
+            if (initiationBases[i] === 'G') {
+                gCount++;
+            } else {
+                break; // Stop counting if the consecutive G pattern breaks
+            }
+        }
+
+        // Assign specific biological linting warnings matching original server feedback
+        if (gCount === 0) {
+            t7GWarning = "Warning: sequence does not start with G after T7 promoter. In vitro transcription may fail.";
+        } else if (gCount === 1) {
+            t7GWarning = "Warning: sequence starts with only one G after T7 promoter. Transcription may be suboptimal.";
+        }
+    }
+
     // 2. STRICT NUCLEOTIDE VALIDATION
     const strictPureRegex = /^[ACGTU]+$/;
     if (!strictPureRegex.test(cleanSeq)) {
@@ -69,7 +93,14 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
     pyProxyResult.destroy();
 
     const scriptOutput = resultObj.terminal;
-    const engineWarning = resultObj.warning;
+    let engineWarning = resultObj.warning || "";
+
+    // 7. MERGE FRONTEND ALERT AND BACKEND THERMODYNAMIC WARNINGS
+    if (t7GWarning) {
+        engineWarning = engineWarning
+        ? `${t7GWarning}\n\n${engineWarning}`
+        : t7GWarning;
+    }
 
     if (scriptOutput.includes('Number of Primers Designed: 0')) {
         throw new Error('No valid assembly found. The engine cannot satisfy the current thermodynamic constraints. Please check and adjust your design parameters (e.g., increase oligo length or relax temperature limits).');
