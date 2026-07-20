@@ -64,6 +64,31 @@ export default function PrimerizeWasmPython() {
         }
     };
 
+    // HANDLER FOR GENERATING AND DOWNLOADING THE TXT FILE
+    const handleDownloadTxt = () => {
+        if (!results) return;
+
+        // Create a file blob with the plain text terminal content
+        const blob = new Blob([results], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        // Determine the file name dynamically based on the construct name prefix
+        const filePrefix = prefix.trim() === '' ? 'Oligo' : prefix.trim();
+        const fileName = `${filePrefix}_primerize_report.txt`;
+
+        // Create a temporary hidden anchor element to trigger the browser download anchor sweep
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+
+        // Append, trigger click, and cleanly purge from DOM
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    };
+
+
     return (
         <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
         <header className="border-b pb-2">
@@ -105,7 +130,9 @@ export default function PrimerizeWasmPython() {
         {/* NOTIFICATION LAYER: Biological/Thermodynamic warnings (Yellow/Orange) */}
         <Notifications message={engineWarning} variant="warning" />
 
-        <Results results={results} />
+        <Results results={results} prefix={prefix} isLoading={isLoading} />
+
+
         </div>
     );
 }
