@@ -19,6 +19,9 @@ export default function PrimerizeWasmPython() {
     const [engineWarning, setEngineWarning] = useState<string>(''); // NEW BIOLOGICAL WARNING STATE
     const [maxLength, setMaxLength] = useState<number | string>(60);
 
+    // 1. ADD T7 CHECKBOX STATE (Defaults to true matching Stanford's default settings)
+    const [checkT7, setCheckT7] = useState<boolean>(true);
+
     // CONSUME THE CUSTOM HOOK
     const { status, pyodideInstance, isLoadingEngine } = usePrimerizeEngine();
     const isReady = status === 'Ready';
@@ -30,12 +33,18 @@ export default function PrimerizeWasmPython() {
         setIsLoading(true);
 
         try {
-            const { scriptOutput, operationalMaxLength, engineWarning: capturedWarning } = await executePrimerizeDesign({
+            const { scriptOutput, operationalMaxLength, engineWarning: capturedWarning, updatedSequence } = await executePrimerizeDesign({
                 sequence,
                 maxLength,
                 prefix,
-                pyodideInstance
+                pyodideInstance,
+                checkT7
             });
+
+            // 3. OPTIONAL VISUAL FEEDBACK: Update the textarea to reflect the prepended sequence
+            if (sequence.trim().toUpperCase() !== updatedSequence) {
+                setSequence(updatedSequence);
+            }
 
             setResults(scriptOutput);
 
@@ -70,6 +79,8 @@ export default function PrimerizeWasmPython() {
         <Settings
         maxLength={maxLength}
         setMaxLength={setMaxLength}
+        checkT7={checkT7}
+        setCheckT7={setCheckT7}
         engineReady={isReady}
         isLoading={isLoading}
         />
