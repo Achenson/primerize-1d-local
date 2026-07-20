@@ -49,9 +49,9 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
 
         // Assign specific biological linting warnings matching original server feedback
         if (gCount === 0) {
-            t7GWarning = "Warning: sequence does not start with G after T7 promoter. In vitro transcription may fail.";
+            t7GWarning = "Sequence does not start with G after T7 promoter. In vitro transcription may fail.";
         } else if (gCount === 1) {
-            t7GWarning = "Warning: sequence starts with only one G after T7 promoter. Transcription may be suboptimal.";
+            t7GWarning = "Sequence starts with only one G after T7 promoter. Transcription may be suboptimal.";
         }
     }
 
