@@ -1,3 +1,4 @@
+// src/components/PrimerizeWasmPython.tsx
 import React, { useState } from 'react';
 import { executePrimerizeDesign } from '../utils/executePrimerizeDesign';
 // Import the custom initialization hook
@@ -15,6 +16,7 @@ export default function PrimerizeWasmPython() {
     const [results, setResults] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [validationError, setValidationError] = useState<string>('');
+    const [engineWarning, setEngineWarning] = useState<string>(''); // NEW BIOLOGICAL WARNING STATE
     const [maxLength, setMaxLength] = useState<number | string>(60);
 
     // CONSUME THE CUSTOM HOOK
@@ -23,11 +25,12 @@ export default function PrimerizeWasmPython() {
 
     const handleDesign = async () => {
         setValidationError('');
+        setEngineWarning(''); // Clear any previous biochemical warnings
         setResults('');
         setIsLoading(true);
 
         try {
-            const { scriptOutput, operationalMaxLength } = await executePrimerizeDesign({
+            const { scriptOutput, operationalMaxLength, engineWarning: capturedWarning } = await executePrimerizeDesign({
                 sequence,
                 maxLength,
                 prefix,
@@ -36,10 +39,16 @@ export default function PrimerizeWasmPython() {
 
             setResults(scriptOutput);
 
+            // If the python core generated biological alerts, store them in the warning state
+            if (capturedWarning) {
+                setEngineWarning(capturedWarning);
+            }
+
             if (maxLength !== operationalMaxLength) {
                 setMaxLength(operationalMaxLength);
             }
         } catch (error: any) {
+            // This catches fatal blockages (e.g. invalid letters, 0 primers built)
             setValidationError(error.message);
         } finally {
             setIsLoading(false);
@@ -72,12 +81,18 @@ export default function PrimerizeWasmPython() {
         setPrefix={setPrefix}
         onCalculate={handleDesign}
         engineReady={isReady}
-//         isLoading={isLoading || isLoadingEngine}
         isLoading={isLoading}
-        clearError={() => setValidationError('')}
+        clearError={() => {
+            setValidationError('');
+            setEngineWarning('');
+        }}
         />
 
-        <Notifications error={validationError} />
+        {/* NOTIFICATION LAYER: Critical validation blocker (Red) */}
+        <Notifications message={validationError} variant="error" />
+
+        {/* NOTIFICATION LAYER: Biological/Thermodynamic warnings (Yellow/Orange) */}
+        <Notifications message={engineWarning} variant="warning" />
 
         <Results results={results} />
         </div>

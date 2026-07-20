@@ -59,13 +59,24 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         const calcButton = page.locator('button', { hasText: 'Calculate Primers' });
         await calcButton.click();
 
-        // 5. Verify the validation text alerts exist inside the screen console element
+        // 5. Verify the results terminal contains the generated oligo layout
         const resultsTerminal = page.locator('pre');
+        await expect(resultsTerminal).toBeVisible();
+        await expect(resultsTerminal).toContainText('STANFORD PRIMERIZE 1D OUTPUT TERMINAL');
 
-        // Asserts that the engine identified structural issues and printed the warning parameters
-        await expect(resultsTerminal).toContainText('WARNINGS & MISPRIMING ALERTS:');
-        await expect(resultsTerminal).toContainText('can misprime with');
-        await expect(resultsTerminal).toContainText('residue overlap');
+        // 6. Verify the biological warning alert box exists with the correct styles and contents
+        // We target the newly created yellow/orange notification container
+        const warningAlert = page.locator('div.bg-amber-50');
+        await expect(warningAlert).toBeVisible();
+
+        // Asserts that the engine identified structural issues inside the warning component
+        await expect(warningAlert).toContainText('Engine Warning:');
+        await expect(warningAlert).toContainText('can misprime with');
+        await expect(warningAlert).toContainText('residue overlap');
+
+        // Optonal sanity check: Ensure that the critical error notification box (rose-50) is NOT present
+        const errorAlert = page.locator('div.bg-rose-50');
+        await expect(errorAlert).not.toBeVisible();
     });
 
     test('should correct primers at max primer lenght 70 for mtThr_TGT_1 without misprime warning', async ({ page }) => {

@@ -3,13 +3,14 @@
 interface DesignParams {
     sequence: string;
     maxLength: number | string;
-    prefix: string; // NEW PARAMETER
+    prefix: string;
     pyodideInstance: any;
 }
 
 interface DesignResult {
     scriptOutput: string;
     operationalMaxLength: number;
+    engineWarning: string; // NOWE POLE NA OSTRZEŻENIE Z SILNIKA
 }
 
 export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyodideInstance }: DesignParams): Promise<DesignResult> {
@@ -47,19 +48,31 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
     // 5. WYWOŁANIE MOSTEK PYTHON / WEBASSEMBLY
     pyodideInstance.globals.set("user_sequence", cleanSeq);
 
-    const scriptOutput = await pyodideInstance.runPythonAsync(`
+    // Zmieniamy runPythonAsync, aby przypisać wynik do zmiennej w Pythonie, którą zaraz pobierzemy
+    const pyProxyResult = await pyodideInstance.runPythonAsync(`
     import run_primerize
     import importlib
 
     importlib.reload(run_primerize)
 
-    # Pass the custom active prefix directly to your backend design routine
+    # Funkcja zwraca teraz słownik {'terminal': ..., 'warning': ...}
     run_primerize.run_design(user_sequence, ${operationalMaxLength}, prefix="${activePrefix}")
     `);
+
+    // Konwertujemy obiekt PyProxy ze środowiska Pythona na czysty obiekt JavaScript
+    const resultObj = pyProxyResult.toJs({ dict_convert: Object.fromEntries });
+    pyProxyResult.destroy(); // Bardzo ważne: zwalniamy referencję w pamięci WASM
+
+    const scriptOutput = resultObj.terminal;
+    const engineWarning = resultObj.warning;
 
     if (scriptOutput.includes('Number of Primers Designed: 0')) {
         throw new Error('No valid assembly found. The engine cannot satisfy the current thermodynamic constraints. Please check and adjust your design parameters (e.g., increase oligo length or relax temperature limits).');
     }
 
-    return { scriptOutput, operationalMaxLength };
+    return {
+        scriptOutput,
+        operationalMaxLength,
+        engineWarning // Zwracamy wyciągnięte ostrzeżenie do komponentu React
+    };
 }

@@ -59,6 +59,10 @@ def run_design(user_sequence, max_length=60, prefix="primer"):
             # Wypisujemy wiersz z zachowaniem szerokości 25 znaków dla unikania przesunięć tabeli
             output.append(f"{p_id:<25} | {p_seq:<42} | {len(p_seq):<6}")
 
+
+
+         # NOWA LOGIKA: Wyciągamy ostrzeżenia do osobnej zmiennej, nie łączymy ich z terminalem
+        captured_warning = ""
         try:
             warnings_text = res.echo("WARNING")
             warnings_text = str(warnings_text).strip()
@@ -66,16 +70,21 @@ def run_design(user_sequence, max_length=60, prefix="primer"):
             if warnings_text and warnings_text != "None":
                 import re
                 ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|\[\d+m")
-                clean_warnings = ansi_escape.sub("", warnings_text)
-
-                output.append("\n-------------------------------------------------------------------------")
-                output.append("WARNINGS & MISPRIMING ALERTS:")
-                output.append(clean_warnings)
+                captured_warning = ansi_escape.sub("", warnings_text).strip()
         except Exception:
             pass
 
         output.append("=========================================================================")
-        return "\n".join(output)
+
+        # ZWRACAMY SŁOWNIK zamiast czystego stringa
+        return {
+            "terminal": "\n".join(output),
+            "warning": captured_warning
+        }
 
     except Exception as inner_err:
-        return f"Python Core Exception:\n{traceback.format_exc()}"
+        # W przypadku błędu krytycznego zachowujemy strukturę słownika
+        return {
+            "terminal": f"Python Core Exception:\n{traceback.format_exc()}",
+            "warning": ""
+        }
