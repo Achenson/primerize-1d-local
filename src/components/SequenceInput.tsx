@@ -18,12 +18,12 @@ export default function SequenceInput({ sequence, setSequence, prefix, setPrefix
         {/* NEW CONSTRUCT PREFIX INPUT FIELD */}
         <div className="flex flex-col gap-1">
         <label className="block text-sm font-semibold text-slate-700">
-        Construct Name (Optional)
+        Construct Name
         </label>
         <input
         type="text"
         className="w-full p-2 border border-slate-300 rounded font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white"
-        placeholder="e.g., myRNA_construct_1 (Default is 'primer')"
+        placeholder=""
         value={prefix}
         maxLength={20} // Original Stanford string length cap
         onChange={(e) => {
@@ -35,7 +35,7 @@ export default function SequenceInput({ sequence, setSequence, prefix, setPrefix
         disabled={isLoading}
         />
         <span className="text-[11px] text-slate-400 italic">
-        Alphanumeric and underscores only. Max 20 chars. Left blank defaults to 'primer'.
+        Alphanumeric and underscores only. Max 20 chars.
     </span>
     </div>
         <div>

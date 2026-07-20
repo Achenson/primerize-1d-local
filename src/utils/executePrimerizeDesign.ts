@@ -43,7 +43,7 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
     const operationalMaxLength = maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
 
     // 4. SANITIZE CONSTRUCT PREFIX (Stanford Rules)
-    const activePrefix = prefix.trim() === '' ? 'primer' : prefix.trim();
+    const activePrefix = prefix.trim() === '' ? 'Oligo' : prefix.trim();
 
     // 5. WYWOŁANIE MOSTEK PYTHON / WEBASSEMBLY
     pyodideInstance.globals.set("user_sequence", cleanSeq);
