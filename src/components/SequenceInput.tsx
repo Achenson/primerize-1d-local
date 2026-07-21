@@ -56,7 +56,7 @@ export default function SequenceInput({ sequence, setSequence, prefix, setPrefix
         <button
         onClick={onCalculate}
         disabled={!engineReady || !sequence.trim() || isLoading}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition-colors disabled:bg-slate-300"
+        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition-colors disabled:bg-slate-300 disabled:cursor-default cursor-pointer"
         >
         {isLoading ? 'Running Optimization Engine...' : 'Calculate Primers'}
         </button>
