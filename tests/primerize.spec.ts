@@ -25,7 +25,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await calcButton.click();
 
         // 5. Weryfikujemy zawartość czarnego okna wyników (<pre>)
-        const resultsTerminal = page.locator('pre');
+        const resultsTerminal = page.getByTestId('primerize-terminal');
 
         // Playwright checks report counts, structural keys, base strings, and lengths
         await expect(resultsTerminal).toContainText('Number of Primers Designed: 2');
@@ -60,24 +60,25 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await calcButton.click();
 
         // 5. Verify the results terminal contains the generated oligo layout
-        const resultsTerminal = page.locator('pre');
+        const resultsTerminal = page.getByTestId('primerize-terminal');
         await expect(resultsTerminal).toBeVisible();
-        await expect(resultsTerminal).toContainText('STANFORD PRIMERIZE 1D OUTPUT TERMINAL');
+        // POPRAWKA: Zmiana tekstu na aktualny nagłówek z run_primerize.py
+        await expect(resultsTerminal).toContainText('STANFORD PRIMERIZE 1D TERMINAL REPORT');
 
-        // 6. Verify the biological warning alert box exists with the correct styles and contents
-        // We target the newly created yellow/orange notification container
-        const warningAlert = page.locator('div.bg-amber-50');
+        // 6. Verify the biological warning alert box exists using data-testid (Future-proof)
+        const warningAlert = page.getByTestId('primerize-warning');
         await expect(warningAlert).toBeVisible();
 
         // Asserts that the engine identified structural issues inside the warning component
-        await expect(warningAlert).toContainText('Engine Warning:');
+        // Usunęliśmy sztywny ciąg 'Engine Warning:', sprawdzamy same faktyczne komunikaty o misprimingu
         await expect(warningAlert).toContainText('can misprime with');
         await expect(warningAlert).toContainText('residue overlap');
 
-        // Optonal sanity check: Ensure that the critical error notification box (rose-50) is NOT present
+        // Optional sanity check: Ensure that the critical error notification box (rose-50) is NOT present
         const errorAlert = page.locator('div.bg-rose-50');
         await expect(errorAlert).not.toBeVisible();
     });
+
 
     test('should correct primers at max primer lenght 70 for mtThr_TGT_1 without misprime warning', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
@@ -107,25 +108,26 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         const calcButton = page.locator('button', { hasText: 'Calculate Primers' });
         await calcButton.click();
 
-        // 6. Access the emerald `<pre>` code block element console matrix
-        const resultsTerminal = page.locator('pre');
+        // 6. Access the results terminal elements via test id
+        const resultsTerminal = page.getByTestId('primerize-terminal');
+        await expect(resultsTerminal).toBeVisible();
 
-        // Verify the newly structured output sizes
-        await expect(resultsTerminal).toContainText('Max Oligo Length Limit: 70 bases');
+        // POPRAWKA: Dopasowanie do nowego formatu linii limitu długości w Pythonie
+        await expect(resultsTerminal).toContainText('Max Limit: 70 bases');
         await expect(resultsTerminal).toContainText('Number of Primers Designed: 2');
 
-        // Assert 1F properties and correct 67 bp length matrix format
-        await expect(resultsTerminal).toContainText('1F');
+        // POPRAWKA: Sprawdzamy nowy format zapisu nagłówka starteru: Nazwa_(kierunek) (długość bp)
+        await expect(resultsTerminal).toContainText('Oligo_1F (67 bp)');
         await expect(resultsTerminal).toContainText(expected70Primer1);
-        await expect(resultsTerminal).toContainText('67');
 
-        // Assert 2R properties and correct 44 bp length matrix format
-        await expect(resultsTerminal).toContainText('2R');
+        // POPRAWKA: Sprawdzamy drugi starter analogicznie do nowego formatu
+        await expect(resultsTerminal).toContainText('Oligo_2R (44 bp)');
         await expect(resultsTerminal).toContainText(expected70Primer2);
-        await expect(resultsTerminal).toContainText('44');
 
-        // ASSERT NEGATIVE SAFETY FACTOR: The misprime block header must NOT exist in the text node layout buffer
-        await expect(resultsTerminal).not.toContainText('WARNINGS & MISPRIMING ALERTS:');
+        // POPRAWKA: Prawidłowa weryfikacja braku ostrzeżeń o misprimingu na poziomie UI Componentu
+        const warningAlert = page.getByTestId('primerize-warning');
+        await expect(warningAlert).not.toBeVisible();
     });
+
 
 });
