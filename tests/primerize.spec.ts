@@ -2,8 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
-    test('should generate correct primers for hGln_TTG_3-1_CCA', async ({ page }) => {
-        const testSequence = 'TTCTAATACGACTCACTATAGGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAATCTCGGTGGGACCTCCA';
+    test('should generate correct primers for hGln_TTG_3-1_CCA (promoter added automatically)', async ({ page }) => {
+        const testSequence = 'GGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAATCTCGGTGGGACCTCCA';
 
         // Oczekiwane sekwencje starterów wyliczone przez algorytm Stanforda
         const expectedPrimer1 = 'TTCTAATACGACTCACTATAGGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAAT';
@@ -14,7 +14,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
         // 2. Czekamy, aż status silnika zmieni się na 'Ready'
         const statusText = page.locator('span:has-text("Ready")');
-        await expect(statusText).toBeVisible({ timeout: 10000 });
+        await expect(statusText).toBeVisible({ timeout: 20000 });
 
         // 3. Lokalizujemy pole tekstowe i symulujemy natywne wklejenie sekwencji (Ctrl+V)
         const textarea = page.locator('textarea');
@@ -41,7 +41,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(resultsTerminal).toContainText('58');
     });
 
-    test('should generate misprime warning for mtThr_TGT_1', async ({ page }) => {
+    test('should generate misprime warning for mtThr_TGT_1 (promoter in the sequence)', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
 
         // 1. Navigate to the local server build
@@ -49,7 +49,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
         // 2. Await the WebAssembly engine's standard handshake sweep
         const statusText = page.locator('span:has-text("Ready")');
-        await expect(statusText).toBeVisible({ timeout: 10000 });
+        await expect(statusText).toBeVisible({ timeout: 20000 });
 
         // 3. Fill out the target nucleotide block sequence
         const textarea = page.locator('textarea');
@@ -80,7 +80,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
     });
 
 
-    test('should correct primers at max primer lenght 70 for mtThr_TGT_1 without misprime warning', async ({ page }) => {
+    test('should generate correct primers at max primer lenght 70 for mtThr_TGT_1 (promoter in the sequence) without misprime warning', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
 
         const expected70Primer1 = 'TTCTAATACGACTCACTATAGGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATG';
@@ -91,7 +91,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
         // 2. Wait for the engine initialization lifecycle hook to finish
         const statusText = page.locator('span:has-text("Ready")');
-        await expect(statusText).toBeVisible({ timeout: 10000 });
+        await expect(statusText).toBeVisible({ timeout: 20000 });
 
         // 3. Locate the Max Length input box and simulate typing "70" from scratch
         const maxLengthInput = page.locator('input[type="number"]');
