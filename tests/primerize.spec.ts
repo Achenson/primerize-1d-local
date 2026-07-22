@@ -93,6 +93,10 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         const statusText = page.locator('span:has-text("Ready")');
         await expect(statusText).toBeVisible({ timeout: 20000 });
 
+        // POPRAWKA: Klikamy przycisk rozwijający zaawansowane opcje, aby pokazać pole input
+        const advancedToggleBtn = page.locator('button', { hasText: 'Show Advanced Design Settings' });
+        await advancedToggleBtn.click();
+
         // 3. Locate the Max Length input box and simulate typing "70" from scratch
         const maxLengthInput = page.locator('input[type="number"]');
         await maxLengthInput.click();
