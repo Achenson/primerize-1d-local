@@ -3,6 +3,7 @@
 interface DesignParams {
     sequence: string;
     maxLength: number | string;
+    minLength: number | string; // NEW PROPERTY
     prefix: string;
     pyodideInstance: any;
     checkT7: boolean; // NEW INTERFACE PROPERTY
@@ -11,11 +12,12 @@ interface DesignParams {
 interface DesignResult {
     scriptOutput: string;
     operationalMaxLength: number;
+    operationalMinLength: number;
     engineWarning: string;
     updatedSequence: string; // NEW PROPERTY TO RETURN MUTATED TEXT
 }
 
-export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyodideInstance, checkT7 }: DesignParams): Promise<DesignResult> {
+export async function executePrimerizeDesign({ sequence, maxLength, minLength, prefix, pyodideInstance, checkT7 }: DesignParams): Promise<DesignResult> {
     let cleanSeq = sequence.trim().toUpperCase();
 
     if (!cleanSeq) {
@@ -72,6 +74,7 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
 
     // 4. SANITYZACJA PARAMETRU PRZED PRZEKAZANIEM DO SILNIKA
     const operationalMaxLength = maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
+    const operationalMinLength = minLength === '' ? 15 : Math.min(60, Math.max(10, Number(minLength)));
 
     // 5. SANITIZE CONSTRUCT PREFIX (Stanford Rules) - Falls back to default uppercase 'Oligo'
     const activePrefix = prefix.trim() === '' ? 'Oligo' : prefix.trim();
@@ -86,7 +89,7 @@ export async function executePrimerizeDesign({ sequence, maxLength, prefix, pyod
     importlib.reload(run_primerize)
 
     # Standard clean execution route
-    run_primerize.run_design(user_sequence, ${operationalMaxLength}, prefix="${activePrefix}")
+    run_primerize.run_design(user_sequence, ${operationalMaxLength}, ${operationalMinLength}, prefix="${activePrefix}")
     `);
 
     const resultObj = pyProxyResult.toJs({ dict_convert: Object.fromEntries });

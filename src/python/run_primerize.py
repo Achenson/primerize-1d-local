@@ -22,14 +22,15 @@ for fake_mod in ["primerize.primerize_2d", "primerize.primerize_3d", "primerize.
 from primerize.primerize_1d import Primerize_1D
 
 
-def run_design(user_sequence, max_length=60, prefix="Oligo"):
+def run_design(user_sequence, max_length=60, min_length=15, prefix="Oligo"):
     """Executes the Stanford Primerize engine efficiently and formats layout arrays dynamically."""
     try:
         max_len_int = int(max_length)
+        min_len_int = int(min_length)
         user_sequence_clean = str(user_sequence).strip().upper()
 
         p = Primerize_1D()
-        res = p.design(user_sequence_clean, prefix=prefix, NUM_PRIMERS=None, MAX_LENGTH=max_len_int)
+        res = p.design(user_sequence_clean, prefix=prefix, NUM_PRIMERS=None, MAX_LENGTH=max_len_int, MIN_LENGTH=min_len_int)
 
         # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna
         sep = "=" * 48
@@ -42,7 +43,7 @@ def run_design(user_sequence, max_length=60, prefix="Oligo"):
 
         output.append("Input Sequence:")
         output.append(user_sequence_clean)
-        output.append(f"Length: {len(user_sequence_clean)} bases | Max Limit: {max_len_int} bases")
+        output.append(f"Length: {len(user_sequence_clean)} bases | Max Limit: {max_len_int} bases | Min Limit: {min_len_int} bases")
 
         primers_list = getattr(res, "primer_set", [])
         output.append(f"Number of Primers Designed: {len(primers_list)}")

@@ -98,7 +98,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await advancedToggleBtn.click();
 
         // 3. Locate the Max Length input box and simulate typing "70" from scratch
-        const maxLengthInput = page.locator('input[type="number"]');
+        const maxLengthInput = page.getByRole('spinbutton').first();
         await maxLengthInput.click();
         await maxLengthInput.fill(''); // Clears out default value '60'
         await maxLengthInput.fill('70'); // Types our custom constraint

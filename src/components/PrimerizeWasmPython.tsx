@@ -18,6 +18,7 @@ export default function PrimerizeWasmPython() {
     const [validationError, setValidationError] = useState<string>('');
     const [engineWarning, setEngineWarning] = useState<string>(''); // NEW BIOLOGICAL WARNING STATE
     const [maxLength, setMaxLength] = useState<number | string>(60);
+    const [minLength, setMinLength] = useState<number | string>(15); // NEW STATE (Defaults to 15 bp)
 
     // 1. ADD T7 CHECKBOX STATE (Defaults to true matching Stanford's default settings)
     const [checkT7, setCheckT7] = useState<boolean>(true);
@@ -33,13 +34,19 @@ export default function PrimerizeWasmPython() {
         setIsLoading(true);
 
         try {
-            const { scriptOutput, operationalMaxLength, engineWarning: capturedWarning, updatedSequence } = await executePrimerizeDesign({
+            const { scriptOutput, operationalMaxLength, operationalMinLength, engineWarning: capturedWarning, updatedSequence } = await executePrimerizeDesign({
                 sequence,
                 maxLength,
+                minLength,
                 prefix,
                 pyodideInstance,
                 checkT7
             });
+
+            // Sync any metadata fallback modifications returned back up from the runtime module:
+            if (minLength !== operationalMinLength) {
+                setMinLength(operationalMinLength);
+            }
 
             // 3. OPTIONAL VISUAL FEEDBACK: Update the textarea to reflect the prepended sequence
             if (sequence.trim().toUpperCase() !== updatedSequence) {
@@ -104,6 +111,8 @@ export default function PrimerizeWasmPython() {
         <Settings
         maxLength={maxLength}
         setMaxLength={setMaxLength}
+        minLength={minLength}
+        setMinLength={setMinLength}
         checkT7={checkT7}
         setCheckT7={setCheckT7}
         engineReady={isReady}
