@@ -79,7 +79,6 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(errorAlert).not.toBeVisible();
     });
 
-
     test('should generate correct primers at max primer lenght 70 for mtThr_TGT_1 (promoter in the sequence) without misprime warning', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
 
@@ -93,45 +92,48 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         const statusText = page.locator('span:has-text("Ready")');
         await expect(statusText).toBeVisible({ timeout: 20000 });
 
-        // POPRAWKA: Klikamy przycisk rozwijający zaawansowane opcje, aby pokazać pole input
+        // 3. Rozwijamy opcje zaawansowane
         const advancedToggleBtn = page.locator('button', { hasText: 'Show Advanced Design Settings' });
         await advancedToggleBtn.click();
 
-        // 3. Locate the Max Length input box and simulate typing "70" from scratch
-        const maxLengthInput = page.getByRole('spinbutton').first();
+        // 4. Wprowadzamy wartość Max Limit (Celujemy za pomocą pierwszej gałki spinbutton)
+        const maxLengthInput = page.getByRole('spinbutton').nth(1);
         await maxLengthInput.click();
-        await maxLengthInput.fill(''); // Clears out default value '60'
-        await maxLengthInput.fill('70'); // Types our custom constraint
-        await maxLengthInput.blur(); // Triggers the React onBlur boundaries check
+        await maxLengthInput.fill('');
+        await maxLengthInput.fill('70');
+        await maxLengthInput.blur();
 
-        // 4. Input the nucleotide sequence block
+        // 5. Wprowadzamy sekwencję nukleotydową
         const textarea = page.locator('textarea');
         await textarea.fill(testSequence);
 
-        // 5. Fire the calculation request execution pipeline
+        // 6. Odpalamy silnik obliczeniowy
         const calcButton = page.locator('button', { hasText: 'Calculate Primers' });
         await calcButton.click();
 
-        // 6. Access the results terminal elements via test id
+        // 7. Weryfikacja terminala wynikowego
         const resultsTerminal = page.getByTestId('primerize-terminal');
-        await expect(resultsTerminal).toBeVisible();
 
-        // POPRAWKA: Dopasowanie do nowego formatu linii limitu długości w Pythonie
-        await expect(resultsTerminal).toContainText('Max Limit: 70 bases');
+        // FIX 1: Dodajemy timeout 20000ms, aby Playwright cierpliwie poczekał na zakończenie obliczeń WASM
+        await expect(resultsTerminal).toBeVisible({ timeout: 20000 });
+
+        // FIX 2: Dopasowanie sprawdzanego tekstu do nowego formatu jednostek ("bp" zamiast "bases") z run_primerize.py
+        await expect(resultsTerminal).toContainText('Max Limit: 70 bp');
+        await expect(resultsTerminal).toContainText('Min Limit: 15 bp');
+        await expect(resultsTerminal).toContainText('Min Tm: 60.0°C');
         await expect(resultsTerminal).toContainText('Number of Primers Designed: 2');
 
-        // POPRAWKA: Sprawdzamy nowy format zapisu nagłówka starteru: Nazwa_(kierunek) (długość bp)
+        // Sprawdzamy obecność wygenerowanych starterów
         await expect(resultsTerminal).toContainText('Oligo_1F (67 bp)');
         await expect(resultsTerminal).toContainText(expected70Primer1);
-
-        // POPRAWKA: Sprawdzamy drugi starter analogicznie do nowego formatu
         await expect(resultsTerminal).toContainText('Oligo_2R (44 bp)');
         await expect(resultsTerminal).toContainText(expected70Primer2);
 
-        // POPRAWKA: Prawidłowa weryfikacja braku ostrzeżeń o misprimingu na poziomie UI Componentu
+        // Sprawdzamy brak ostrzeżeń
         const warningAlert = page.getByTestId('primerize-warning');
         await expect(warningAlert).not.toBeVisible();
     });
+
 
 
 });

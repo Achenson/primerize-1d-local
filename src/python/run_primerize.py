@@ -22,17 +22,29 @@ for fake_mod in ["primerize.primerize_2d", "primerize.primerize_3d", "primerize.
 from primerize.primerize_1d import Primerize_1D
 
 
-def run_design(user_sequence, max_length=60, min_length=15, prefix="Oligo"):
-    """Executes the Stanford Primerize engine efficiently and formats layout arrays dynamically."""
+def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_primers=None, prefix="Oligo"):
+    """Executes the Stanford Primerize engine efficiently with extended biochemical arguments."""
     try:
         max_len_int = int(max_length)
         min_len_int = int(min_length)
-        user_sequence_clean = str(user_sequence).strip().upper()
+        min_tm_float = float(min_tm)
+
+        # Jeśli JavaScript przekazał null, NUM_PRIMERS w silniku musi dostać None dla automatycznego wyliczenia
+        num_primers_val = int(num_primers) if num_primers is not None else None
 
         p = Primerize_1D()
-        res = p.design(user_sequence_clean, prefix=prefix, NUM_PRIMERS=None, MAX_LENGTH=max_len_int, MIN_LENGTH=min_len_int)
 
-        # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna
+        # Wywołujemy oficjalną metodę design() silnika Stanford / RiboKit z kompletem parametrów
+        res = p.design(
+            str(user_sequence).strip().upper(),
+            prefix=prefix,
+            NUM_PRIMERS=num_primers_val,
+            MAX_LENGTH=max_len_int,
+            MIN_LENGTH=min_len_int,
+            MIN_TM=min_tm_float
+        )
+
+        # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna i nie łamały się
         sep = "=" * 48
         sub_sep = "-" * 48
 
@@ -42,13 +54,15 @@ def run_design(user_sequence, max_length=60, min_length=15, prefix="Oligo"):
         output.append(sep)
 
         output.append("Input Sequence:")
-        output.append(user_sequence_clean)
-        output.append(f"Length: {len(user_sequence_clean)} bases | Max Limit: {max_len_int} bases | Min Limit: {min_len_int} bases")
+        output.append(str(user_sequence).strip().upper())
+
+        # ROZBUDOWANA LINIA METADANYCH: Wyświetla jednocześnie wszystkie ograniczenia długości oraz temperaturę topnienia Tm
+        output.append(f"Length: {len(str(user_sequence).strip())} bases | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp | Min Tm: {min_tm_float}°C")
 
         primers_list = getattr(res, "primer_set", [])
         output.append(f"Number of Primers Designed: {len(primers_list)}")
 
-        # POPRAWKA 2: Tylko jedna linia przerywana pod statystyką, bez dodatkowego nagłówka tekstowego
+        # Minimalistyczne przejście od razu do listy wygenerowanych starterów
         output.append(sub_sep)
 
         total_primers = len(primers_list)
@@ -56,15 +70,17 @@ def run_design(user_sequence, max_length=60, min_length=15, prefix="Oligo"):
 
         for i, primer in enumerate(primers_list):
             direction = "F" if i < half else "R"
+
+            # Konstruujemy identyfikator identycznie jak w oryginalnym narzędziu Stanforda
             p_id = f"{prefix}_{i+1}{direction}"
             p_seq = str(primer).strip().upper()
 
-            # POPRAWKA 1: Nazwa starteru bez nawiasów kwadratowych (np. Oligo_1F (60 bp))
+            # Nowy, czytelny układ: Nazwa i długość w nagłówku, czysta sekwencja w linii poniżej
             output.append(f"{p_id} ({len(p_seq)} bp)")
             output.append(p_seq)
 
             if i < total_primers - 1:
-                output.append("") # Mały odstęp zamiast brzydkich kresek
+                output.append("") # Subtelna czysta linia odstępu między starterami
 
         try:
             warnings_text = res.echo("WARNING")

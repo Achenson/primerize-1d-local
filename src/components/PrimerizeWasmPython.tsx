@@ -19,6 +19,8 @@ export default function PrimerizeWasmPython() {
     const [engineWarning, setEngineWarning] = useState<string>(''); // NEW BIOLOGICAL WARNING STATE
     const [maxLength, setMaxLength] = useState<number | string>(60);
     const [minLength, setMinLength] = useState<number | string>(15); // NEW STATE (Defaults to 15 bp)
+    const [minTm, setMinTm] = useState<number | string>(60);
+    const [numPrimers, setNumPrimers] = useState<number | string>('');
 
     // 1. ADD T7 CHECKBOX STATE (Defaults to true matching Stanford's default settings)
     const [checkT7, setCheckT7] = useState<boolean>(true);
@@ -38,6 +40,8 @@ export default function PrimerizeWasmPython() {
                 sequence,
                 maxLength,
                 minLength,
+                minTm,        // Przekazanie Tm
+                numPrimers,   // Przekazanie liczby starterów
                 prefix,
                 pyodideInstance,
                 checkT7
@@ -113,6 +117,10 @@ export default function PrimerizeWasmPython() {
         setMaxLength={setMaxLength}
         minLength={minLength}
         setMinLength={setMinLength}
+        minTm={minTm}
+        setMinTm={setMinTm}
+        numPrimers={numPrimers}
+        setNumPrimers={setNumPrimers}
         checkT7={checkT7}
         setCheckT7={setCheckT7}
         engineReady={isReady}
