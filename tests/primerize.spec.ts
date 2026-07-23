@@ -134,6 +134,89 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(warningAlert).not.toBeVisible();
     });
 
+    test('should generate correct primers for hGln_TTG_3-1_CCA for custom number of primers, min length and min Tm', async ({ page }) => {
+        const testSequence = 'GGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAATCTCGGTGGGACCTCCA';
+
+        const expectedPrimer1 = 'TTCTAATACGACTCACTATAGGCCCCATGGTGTAA';
+        const expectedPrimer2 = 'AGTCCAGAGTGCTAACCATTACACCATGGGGCCTA';
+        const expectedPrimer3 = 'TGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAAT';
+        const expectedPrimer4 = 'TGGAGGTCCCACCGAGATTTGAACTCGGATCGCT';
+
+        // 1. Wejdź na stronę główną portalu
+        await page.goto('/');
+
+        // 2. Poczekaj na załadowanie wirtualnego środowiska WASM
+        const statusText = page.locator('span:has-text("Ready")');
+        await expect(statusText).toBeVisible({ timeout: 20000 });
+
+        // 3. Rozwiń panel opcji zaawansowanych
+        const advancedToggleBtn = page.locator('button', { hasText: 'Show Advanced Design Settings' });
+        await advancedToggleBtn.click();
+
+        // 4. Konfiguracja parametrów zaawansowanych za pomocą indeksów spinbutton (.nth)
+        // .first()  -> Position 1: Minimum Tm
+        // .nth(1)   -> Position 2: Max Oligo Length Limit
+        // .nth(2)   -> Position 3: Min Oligo Length Limit
+        // .nth(3)   -> Position 4: Number of Primers
+
+        // Ustawiamy: Minimum Tm = 59
+        const minTmInput = page.getByRole('spinbutton').first();
+        await minTmInput.click();
+        await minTmInput.fill('');
+        await minTmInput.fill('59');
+        await minTmInput.blur();
+
+        // Ustawiamy: Min Oligo Length Limit = 34
+        const minLengthInput = page.getByRole('spinbutton').nth(2);
+        await minLengthInput.click();
+        await minLengthInput.fill('');
+        await minLengthInput.fill('34');
+        await minLengthInput.blur();
+
+        // Ustawiamy: Number of Primers = 4
+        const numPrimersInput = page.getByRole('spinbutton').nth(3);
+        await numPrimersInput.click();
+        await numPrimersInput.fill('');
+        await numPrimersInput.fill('4');
+        await numPrimersInput.blur();
+
+        // 5. Wprowadź sekwencję nukleotydową do głównego pola tekstowego
+        const textarea = page.locator('textarea');
+        await textarea.fill(testSequence);
+
+        // 6. Uruchom proces optymalizacji termodynamicznej Stanforda
+        const calcButton = page.locator('button', { hasText: 'Calculate Primers' });
+        await calcButton.click();
+
+        // 7. Przechwyć kontener terminala za pomocą atrybutu data-testid
+        const resultsTerminal = page.getByTestId('primerize-terminal');
+
+        // Dajemy silnikowi bezpieczne 20 sekund na zakończenie ciężkich kalkulacji
+        await expect(resultsTerminal).toBeVisible({ timeout: 20000 });
+
+        // WERYFIKACJA METADANYCH: Sprawdzamy czy zmodyfikowane parametry poprawnie wyświetlają się w outpucie
+        await expect(resultsTerminal).toContainText('Input Sequence (95 bp):');
+        await expect(resultsTerminal).toContainText('Max Limit: 60 bp | Min Limit: 34 bp | Min Tm: 59.0°C');
+        await expect(resultsTerminal).toContainText('Number of Primers Constraint: 4');
+        await expect(resultsTerminal).toContainText('Number of Primers Designed: 4');
+
+        // WERYFIKACJA STARTERÓW: Sprawdzamy czy wygenerowane sekwencje i długości są idealne
+        await expect(resultsTerminal).toContainText('Oligo_1F (35 bp)');
+        await expect(resultsTerminal).toContainText(expectedPrimer1);
+
+        await expect(resultsTerminal).toContainText('Oligo_2F (35 bp)');
+        await expect(resultsTerminal).toContainText(expectedPrimer2);
+
+        await expect(resultsTerminal).toContainText('Oligo_3R (44 bp)');
+        await expect(resultsTerminal).toContainText(expectedPrimer3);
+
+        await expect(resultsTerminal).toContainText('Oligo_4R (34 bp)');
+        await expect(resultsTerminal).toContainText(expectedPrimer4);
+
+        // Weryfikacja negatywna: Brak błędów o misprimingu na poziomie interfejsu
+        const warningAlert = page.getByTestId('primerize-warning');
+        await expect(warningAlert).not.toBeVisible();
+    });
 
 
 });
