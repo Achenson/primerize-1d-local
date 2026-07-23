@@ -53,11 +53,18 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
         output.append("       STANFORD PRIMERIZE 1D TERMINAL REPORT")
         output.append(sep)
 
-        output.append("Input Sequence:")
-        output.append(str(user_sequence).strip().upper())
+        # POPRAWKA 1: Przeniesienie długości do linii nagłówka sekwencji wejściowej
+        clean_seq_str = str(user_sequence).strip().upper()
+        output.append(f"Input Sequence ({len(clean_seq_str)} bp):")
+        output.append(clean_seq_str)
 
         # ROZBUDOWANA LINIA METADANYCH: Wyświetla jednocześnie wszystkie ograniczenia długości oraz temperaturę topnienia Tm
-        output.append(f"Length: {len(str(user_sequence).strip())} bases | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp | Min Tm: {min_tm_float}°C")
+        output.append(f"Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp | Min Tm: {min_tm_float}°C")
+
+        # POPRAWKA 2: Dodanie linii wskazującej zdefiniowane ustawienie dla Number of Primers
+        # Jeśli użytkownik pozostawił boks pusty, num_primers_val to None, czyli wyświetlamy "Auto"
+        primers_setting_text = "Auto" if num_primers_val is None else str(num_primers_val)
+        output.append(f"Number of Primers Constraint: {primers_setting_text}")
 
         primers_list = getattr(res, "primer_set", [])
         output.append(f"Number of Primers Designed: {len(primers_list)}")
