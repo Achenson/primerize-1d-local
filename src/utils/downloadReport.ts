@@ -14,7 +14,7 @@ export function downloadReportTxt({ results, prefix }: DownloadReportParams): vo
 
     // Determine the file name dynamically based on the construct name prefix
     const filePrefix = prefix.trim() === '' ? 'Oligo' : prefix.trim();
-    const fileName = `${filePrefix}_primerize_report.txt`;
+    const fileName = `${filePrefix}_primerize.txt`;
 
     // Create a temporary hidden anchor element to trigger the browser download
     const link = document.createElement('a');
