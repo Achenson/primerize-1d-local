@@ -149,7 +149,11 @@ export default function PrimerizeWasmPython() {
 
         <Results results={results} prefix={prefix} isLoading={isLoading} />
 
-
+        <footer className="mt-4 pt-4 border-t border-slate-100 text-center">
+        <p className="text-[11px] text-slate-400 font-medium leading-relaxed select-none">
+        Powered by the Primerize 1D Engine (Developed by Das Lab, Stanford University) via WebAssembly.
+        </p>
+        </footer>
         </div>
     );
 }
