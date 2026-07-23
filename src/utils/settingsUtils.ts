@@ -59,3 +59,23 @@ export const cleanNumPrimersBlur = (value: number | string): number | string => 
     if (val < 2) return 2;       // Minimalna granica
     return value;
 };
+
+
+/**
+ * Zwraca true, jeśli wszystkie zaawansowane parametry mają wartości domyślne.
+ */
+export const isDefaultSettings = (
+    minTm: number | string,
+    maxLength: number | string,
+    minLength: number | string,
+    numPrimers: number | string
+): boolean => {
+    return (
+        Number(minTm) === 60 &&
+        Number(maxLength) === 60 &&
+        Number(minLength) === 15 &&
+        numPrimers === ''
+    );
+};
+
+
