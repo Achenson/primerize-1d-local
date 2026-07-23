@@ -182,7 +182,7 @@ export default function Settings({
                             max={50}
                             />
                             <span className="text-[11px] text-slate-400 italic shrink-0">
-                            (Leave blank for automatic minimum calculation)
+                            (Leave blank for automatic calculation)
                             </span>
                             </div>
                             </div>
