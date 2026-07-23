@@ -93,7 +93,7 @@ export default function Settings({
                 max={80}
                 />
                 <span className="text-[11px] text-slate-400 italic shrink-0">
-                (Range: 50-80 °C, Default: 60)
+                Range: 50-80 °C
                 </span>
                 </div>
                 </div>
@@ -118,7 +118,7 @@ export default function Settings({
                 max={120}
                 />
                 <span className="text-[11px] text-slate-400 italic shrink-0">
-                (Range: 15-120 bp)
+                Range: 15-120 bp
                 </span>
                 </div>
                 </div>
@@ -143,7 +143,7 @@ export default function Settings({
                 max={60}
                 />
                 <span className="text-[11px] text-slate-400 italic shrink-0">
-                (Range: 10-60 bp)
+                Range: 10-60 bp
                 </span>
                 </div>
                 </div>
@@ -169,7 +169,7 @@ export default function Settings({
                 max={50}
                 />
                 <span className="text-[11px] text-slate-400 italic shrink-0">
-                (Leave blank for automatic calculation)
+                Leave blank for automatic calculation. Range: 2-50
                 </span>
                 </div>
                 </div>
