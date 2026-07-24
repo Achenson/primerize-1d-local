@@ -39,7 +39,7 @@ export default function SequenceInput({ sequence, setSequence, prefix, setPrefix
     </span>
     </div>
         <div>
-        <label className="block text-sm font-medium text-slate-700 mb-1">Sequence Input</label>
+        <label className="block text-sm font-semibold text-slate-700 mb-1">Sequence Input</label>
         <textarea
         className="w-full p-2 border border-slate-300 rounded font-mono text-sm h-32 focus:ring-1 focus:ring-blue-500 outline-none"
         placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"

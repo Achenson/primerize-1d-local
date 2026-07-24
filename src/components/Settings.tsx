@@ -47,7 +47,7 @@ export default function Settings({
         <button
         onClick={() => setShowAdvanced(!showAdvanced)}
         type="button"
-        className="text-sm font-semibold text-slate-700 hover:text-slate-900 cursor-pointer focus:outline-none flex items-center gap-1"
+        className="text-sm font-semibold text-slate-700 hover:text-slate-950 cursor-pointer focus:outline-none flex items-center gap-1"
         >
         {showAdvanced ? 'Hide Advanced Design Settings' : 'Show Advanced Design Settings'}
         </button>
