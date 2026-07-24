@@ -103,7 +103,7 @@ export default function PrimerizeWasmPython() {
     return (
         <div className="w-full max-w-xl min-w-0 mx-auto p-6 bg-white shadow-md rounded-lg mt-10 flex flex-col gap-4">
         <header className="border-b pb-2">
-        <h1 className="text-xl font-bold text-slate-800">Primerize (Python WASM)</h1>
+        <h1 className="text-xl font-bold text-slate-800">Primerize 1D (Local - Python WASM)</h1>
         <div className="text-xs mt-1">
         <span className="font-semibold text-slate-600">Engine Status: </span>
         <span className={isReady ? 'text-emerald-600 font-bold' : 'text-amber-600 animate-pulse'}>
