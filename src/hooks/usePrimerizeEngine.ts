@@ -1,4 +1,4 @@
-// src/hooks/usePrimerizeEngine.ts
+// /src/hooks/usePrimerizeEngine.ts
 import { useState, useEffect } from 'react';
 import primerizeRunnerScript from '../python/run_primerize.py?raw';
 
@@ -13,12 +13,15 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
     const [pyodideInstance, setPyodideInstance] = useState<any>(null);
 
     useEffect(() => {
+        let isMounted = true;
+
         async function initPythonWasm() {
             try {
+                // 1. WCZYTANIE BIBLIOTEKI GLÓWNEGO PYODIDE Z CDN (WERSJA 0.26.1)
                 if (!window.loadPyodide) {
                     setStatus('Loading Pyodide script library into page thread...');
                     const script = document.createElement('script');
-                    script.src = 'https://jsdelivr.net';
+                    script.src = 'https://jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
                     script.async = true;
 
                     await new Promise((resolve, reject) => {
@@ -28,20 +31,35 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
                     });
                 }
 
-                setStatus('Booting WebAssembly Python engine...');
-                const pyodide = await window.loadPyodide();
+                if (!isMounted) return;
 
-                setStatus('Loading core scientific math packages & package manager...');
-                await pyodide.loadPackage(["numpy", "matplotlib", "micropip"]);
+                // 2. INICJALIZACJA INSTANCJI Z PRECYZYJNYM INDEXURL (WERSJA 0.26.1)
+                setStatus('Initializing Pyodide virtual instance runtime...');
+                const pyodide = await window.loadPyodide({indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'});
 
-                setStatus('Installing missing Excel dependency (xlwt)...');
+                if (!isMounted) return;
+
+                // 3. ŁADOWANIE KRYTYCZNYCH PAKIETÓW MATEMATYCZNYCH (NUMPY + MICROPIP)
+                // Numpy waży niewiele i jest niezbędny do obliczeń macierzy delH/delS.
+                setStatus('Loading required scientific packages...');
+                await pyodide.loadPackage(['micropip', 'numpy']);
+
+                if (!isMounted) return;
+
+                // 4. INSTALACJA PAKIETU XLWT BEZ DODATKOWYCH ZALEZNOSCI (DEPS=FALSE)
+                setStatus('Installing file export extensions...');
                 await pyodide.runPythonAsync(`
                 import micropip
-                await micropip.install('xlwt')
+                await micropip.install('xlwt', deps=False)
                 `);
 
+                if (!isMounted) return;
+
+                // 5. TWORZENIE WIRTUALNEGO SYSTEMU PLIKÓW DLA SILNIKA STANFORDA
                 setStatus('Creating virtual filesystem for Stanford Primerize...');
-                try { pyodide.FS.mkdir('primerize'); } catch (e) {}
+                try {
+                    pyodide.FS.mkdir('primerize');
+                } catch (e) {}
 
                 const primerizeFiles = [
                     '__init__.py', 'misprime.py', 'primerize_1d.py', 'primerize_2d.py',
@@ -50,6 +68,7 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
                 ];
 
                 for (const file of primerizeFiles) {
+                    if (!isMounted) return;
                     setStatus(`Loading ${file} into WASM filesystem...`);
                     const response = await fetch(`/primerize/${file}`);
                     if (!response.ok) throw new Error(`Failed to download public asset: ${file}`);
@@ -57,26 +76,63 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
                     pyodide.FS.writeFile(`primerize/${file}`, fileContent);
                 }
 
+                if (!isMounted) return;
+
+                // 6. BLOKADA WYŁĄCZNIE CIĘŻKICH BIBLIOTEK GRAFICZNYCH (MATPLOTLIB I PILLOW)
                 setStatus('Loading Stanford Primerize core algorithms...');
-                await pyodide.runPythonAsync(`
+
+                // Wywołujemy synchroniczne .runPython() dla idealnego odcięcia skanera JS
+                // /src/hooks/usePrimerizeEngine.ts
+
+                // ZNAJDŹ SEKCJĘ 6 I PODMIEŃ W NIEJ CAŁY KOD WEWNĄTRZ pyodide.runPython NA TEN:
+                pyodide.runPython(`
                 import sys
+                from types import ModuleType
+
+                # Inteligentna atrapa, która potrafi podać wersję tekstową lub zwrócić pustą funkcję
+                class DummyMock(ModuleType):
+                    def __getattr__(self, name):
+                    # Jeśli kod Stanforda pyta o wersję Matplotlib, podajemy poprawny ciąg tekstowy
+                        if name == "__version__":
+                            return "3.0.0"
+
+                        # Dla wszystkich innych wywołań zwracamy bezpieczną, pustą funkcję
+                        def dummy_func(*args, **kwargs):
+                            return None
+                        return dummy_func
+
+                    # Blokujemy ciężki silnik rysowania wykresów (Matplotlib, Pillow, Fonttools)
+                for heavy_mod in ["matplotlib", "matplotlib.pyplot", "Pillow", "PIL", "kiwisolver", "cycler", "fonttools"]:
+                    if heavy_mod not in sys.modules:
+                        sys.modules[heavy_mod] = DummyMock(heavy_mod)
+
                 if "." not in sys.path:
                     sys.path.append(".")
-                    `);
+                `);
 
-                setStatus('Saving runner script to virtual disk...');
-                pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
 
-                setPyodideInstance(pyodide);
+                        // 7. ZAPIS SKRYPTU ORKIESTRACJI I FINALIZACJA STARTU
+                        pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
+
+                    if (!isMounted) return;
+
+                    setPyodideInstance(pyodide);
                 setStatus('Ready');
+
             } catch (err: any) {
-                console.error(err);
-                setStatus(`Failed to launch Python WebAssembly: ${err.message}`);
+                console.error('WebAssembly Core Engine Initialization Fault:', err);
+                if (isMounted) {
+                    setStatus(`Failed to launch Python WebAssembly: ${err.message || 'Unknown allocation failure'}`);
+                }
             }
         }
 
         initPythonWasm();
-    }, []); // Maintained with an empty dependency array as requested
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return {
         status,

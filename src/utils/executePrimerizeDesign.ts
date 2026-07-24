@@ -95,7 +95,7 @@ export async function executePrimerizeDesign({
     pyodideInstance.globals.set("js_prefix", activePrefix);
 
     // 6. URUCHOMIENIE SILNIKA PYTHON
-    const pyProxyResult = await pyodideInstance.runPythonAsync(`
+    const pyProxyResult = pyodideInstance.runPython(`
     import run_primerize
     import importlib
 
