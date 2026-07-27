@@ -119,6 +119,7 @@ export default function SettingsAdvanced({
                         placeholder="Auto"
                         min={2}
                         max={50}
+                        step={2}
                     />
                     <span className="text-[11px] text-slate-400 italic shrink-0 cursor-default select-none">
                         Leave blank for automatic calculation. Range: 2-50
