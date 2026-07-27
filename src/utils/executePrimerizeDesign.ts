@@ -126,7 +126,7 @@ export async function executePrimerizeDesign({
     }
 
     if (scriptOutput.includes('Number of Primers Designed: 0')) {
-        throw new Error('No valid assembly found. The engine cannot satisfy the current thermodynamic constraints. Please check and adjust your design parameters (e.g., increase oligo length or relax temperature limits).');
+        throw new Error('No valid assembly found. The engine cannot satisfy the current thermodynamic constraints. Please adjust your design parameters.');
     }
 
     return {
