@@ -44,7 +44,7 @@ export default function SettingsAdvanced({
                         min={50}
                         max={80}
                     />
-                    <span className="text-[11px] text-slate-400 italic shrink-0">
+                    <span className="text-[11px] text-slate-400 italic shrink-0 cursor-default select-none">
                         Range: 50-80 °C
                     </span>
                 </div>
@@ -69,7 +69,7 @@ export default function SettingsAdvanced({
                         min={15}
                         max={120}
                     />
-                    <span className="text-[11px] text-slate-400 italic shrink-0">
+                    <span className="text-[11px] text-slate-400 italic shrink-0 cursor-default select-none">
                         Range: 15-120 bp
                     </span>
                 </div>
@@ -94,7 +94,7 @@ export default function SettingsAdvanced({
                         min={10}
                         max={60}
                     />
-                    <span className="text-[11px] text-slate-400 italic shrink-0">
+                    <span className="text-[11px] text-slate-400 italic shrink-0 cursor-default select-none">
                         Range: 10-60 bp
                     </span>
                 </div>
@@ -120,7 +120,7 @@ export default function SettingsAdvanced({
                         min={2}
                         max={50}
                     />
-                    <span className="text-[11px] text-slate-400 italic shrink-0">
+                    <span className="text-[11px] text-slate-400 italic shrink-0 cursor-default select-none">
                         Leave blank for automatic calculation. Range: 2-50
                     </span>
                 </div>
