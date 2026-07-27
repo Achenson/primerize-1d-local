@@ -98,8 +98,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
                 ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|\[\d+m")
                 clean_warnings = ansi_escape.sub("", warnings_text).strip()
 
-                output.append("\n" + sub_sep)
-                output.append("WARNINGS & MISPRIMING ALERTS:")
+                output.append(sub_sep)
                 output.append(clean_warnings)
         except Exception:
             pass
