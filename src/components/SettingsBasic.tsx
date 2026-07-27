@@ -19,14 +19,19 @@ export default function SettingsBasic({ checkT7, setCheckT7, isLoading }: BasicP
                 onChange={(e) => setCheckT7(e.target.checked)}
                 disabled={isLoading}
             />
-            <div className="flex flex-col">
-                <label htmlFor="checkT7" className="text-xs font-semibold text-slate-700 cursor-pointer select-none">
+
+            {/* The label is now the flex column container */}
+            <label
+                htmlFor="checkT7"
+                className="flex flex-col cursor-pointer select-none group"
+            >
+                <span className="text-xs font-semibold text-slate-700 group-hover:text-slate-950 transition-colors">
                     Automatically add T7 Promoter Sequence
-                </label>
+                </span>
                 <span className="text-[11px] text-slate-400 italic leading-snug">
                     Prepends the T7 RNA polymerase promoter (TTCTAATACGACTCACTATA) if missing.
                 </span>
-            </div>
+            </label>
         </div>
     );
 }
