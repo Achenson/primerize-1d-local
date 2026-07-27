@@ -9,13 +9,18 @@ interface NotificationsProps {
 export default function Notifications({ message, variant = 'error' }: NotificationsProps) {
     if (!message) return null;
 
-    if (variant === 'warning') {
+  if (variant === 'warning') {
+          // Usuwa dokładnie tekst "WARNING: " z każdego miejsca w treści (flaga 'g')
+            // Konstrukcja \s* usuwa również spacje występujące bezpośrednio po dwukropku
+        const cleanMessage = typeof message === 'string'
+                ? message.replace(/WARNING:\s*/g, '').trim()
+                : message;
         return (
             <div data-testid="primerize-warning" className="p-3 bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium rounded shadow-sm flex items-start gap-2">
             <span className="shrink-0 text-base">⚠️</span>
             <div>
             <strong className="block font-bold text-amber-900 mb-0.5">Engine Warning:</strong>
-            <span className="whitespace-pre-wrap">{message}</span>
+            <span className="whitespace-pre-wrap">{cleanMessage}</span>
             </div>
             </div>
         );
