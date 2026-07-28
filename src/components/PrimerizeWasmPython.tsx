@@ -75,6 +75,30 @@ export default function PrimerizeWasmPython() {
         }
     };
 
+    const handleDesignClick = () => {
+        // 1. Natychmiast czyścimy stare błędy i włączamy tryb ładowania
+        setValidationError('');
+        setEngineWarning('');
+        setResults('');
+        setIsLoading(true);
+
+        // 2. Dajemy Reactowi i przeglądarce 50ms na zaktualizowanie wyglądu przycisku
+        setTimeout(async () => {
+            try {
+                // Wywołujemy Twoją oryginalną logikę obliczeniową
+                await handleDesign();
+            } catch (error: any) {
+                // Na wypadek gdyby handleDesign sam nie złapał błędu
+                setValidationError(error.message);
+                setIsLoading(false);
+            }
+            // UWAGA: setIsLoading(false) jest już wywoływane wewnątrz
+            // bloku finally Twojej oryginalnej funkcji handleDesign,
+            // więc nie musimy go tu dublować, jeśli wszystko pójdzie dobrze.
+        }, 50);
+    };
+
+
     // HANDLER FOR GENERATING AND DOWNLOADING THE TXT FILE
     const handleDownloadTxt = () => {
         if (!results) return;
@@ -132,7 +156,7 @@ export default function PrimerizeWasmPython() {
         setSequence={setSequence}
         prefix={prefix}
         setPrefix={setPrefix}
-        onCalculate={handleDesign}
+        onCalculate={handleDesignClick}
         engineReady={isReady}
         isLoading={isLoading}
         clearError={() => {
