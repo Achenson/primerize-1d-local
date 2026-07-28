@@ -137,32 +137,22 @@ export default function PrimerizeWasmPython() {
         </header>
 
         <Settings
-        maxLength={maxLength}
-        setMaxLength={setMaxLength}
-        minLength={minLength}
-        setMinLength={setMinLength}
-        minTm={minTm}
-        setMinTm={setMinTm}
-        numPrimers={numPrimers}
-        setNumPrimers={setNumPrimers}
-        checkT7={checkT7}
-        setCheckT7={setCheckT7}
-        engineReady={isReady}
-        isLoading={isLoading}
+            {...{
+                maxLength, setMaxLength, minLength, setMinLength, minTm, setMinTm,
+                numPrimers, setNumPrimers, checkT7, setCheckT7, isLoading
+            }}
+            engineReady={isReady}
         />
 
+
         <SequenceInput
-        sequence={sequence}
-        setSequence={setSequence}
-        prefix={prefix}
-        setPrefix={setPrefix}
-        onCalculate={handleDesignClick}
-        engineReady={isReady}
-        isLoading={isLoading}
-        clearError={() => {
-            setValidationError('');
-            setEngineWarning('');
-        }}
+            {...{ sequence, setSequence, prefix, setPrefix, isLoading }}
+            onCalculate={handleDesignClick}
+            engineReady={isReady}
+            clearError={() => {
+                setValidationError('');
+                setEngineWarning('');
+            }}
         />
 
         {/* NOTIFICATION LAYER: Critical validation blocker (Red) */}
