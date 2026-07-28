@@ -1,5 +1,6 @@
 // /src/hooks/usePrimerizeEngine.ts
 import { useState, useEffect } from 'react';
+// @ts-ignore - Vite uses the '?raw' suffix to import the Python script as a plain text string, which TS doesn't natively recognize as a module.
 import primerizeRunnerScript from '../python/run_primerize.py?raw';
 
 export interface UsePrimerizeEngineResult {
@@ -18,7 +19,7 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
         async function initPythonWasm() {
             try {
                 // 1. WCZYTANIE BIBLIOTEKI GLÓWNEGO PYODIDE Z CDN (WERSJA 0.26.1)
-                if (!window.loadPyodide) {
+                if (!(window as Window & { loadPyodide?: unknown }).loadPyodide)  {
                     setStatus('Loading Pyodide script library into page thread...');
                     const script = document.createElement('script');
                     script.src = 'https://jsdelivr.net/pyodide/v0.26.1/full/pyodide.js';
@@ -34,8 +35,10 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
                 if (!isMounted) return;
 
                 // 2. INICJALIZACJA INSTANCJI Z PRECYZYJNYM INDEXURL (WERSJA 0.26.1)
-                setStatus('Initializing Pyodide virtual instance runtime...');
-                const pyodide = await window.loadPyodide({indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'});
+              setStatus('Initializing Pyodide virtual instance runtime...');
+               // Type set to 'any' because loadPyodide is attached
+               // globally to the window object by an external CDN script at runtime.
+                const pyodide = await (window as any).loadPyodide({indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.1/full/'});
 
                 if (!isMounted) return;
 
