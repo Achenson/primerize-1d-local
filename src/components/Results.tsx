@@ -23,7 +23,7 @@ export default function Results({ results, prefix, isLoading = false }: ResultsP
             - break-words: Zapewnia estetyczne zawijanie długich ciągów.
             - Brak suwaków na dole strony – wszystko mieści się w pionie.
             */}
-            <div data-testid="primerize-terminal" className="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded min-h-[150px] max-h-90 overflow-y-auto whitespace-pre-wrap break-words leading-relaxed border border-slate-950 shadow-inner">
+            <div data-testid="primerize-terminal" className="w-full p-3 bg-slate-900 text-emerald-400 font-mono text-xs rounded min-h-[150px] max-h-90 overflow-y-auto whitespace-pre-wrap wrap-break-word leading-relaxed border border-slate-950 shadow-inner">
             {results}
             </div>
             </div>
