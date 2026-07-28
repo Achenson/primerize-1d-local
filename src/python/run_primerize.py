@@ -46,12 +46,12 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
         )
 
         # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna i nie łamały się
-        sep = "=" * 48
-        sub_sep = "-" * 48
+        sep = "=" * 69
+        sub_sep = "-" * 69
 
         output = []
         output.append(sep)
-        output.append("       STANFORD PRIMERIZE 1D TERMINAL REPORT")
+        output.append("STANFORD PRIMERIZE 1D TERMINAL REPORT")
         output.append(sep)
 
         # POPRAWKA 1: Przeniesienie długości do linii nagłówka sekwencji wejściowej
