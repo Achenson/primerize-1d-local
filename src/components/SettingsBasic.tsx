@@ -2,13 +2,13 @@
 // ==========================================
 //
 
-interface BasicProps {
+interface SettingsBasicProps {
     checkT7: boolean;
     setCheckT7: (value: boolean) => void;
     isLoading: boolean;
 }
 
-export default function SettingsBasic({ checkT7, setCheckT7, isLoading }: BasicProps) {
+export default function SettingsBasic({ checkT7, setCheckT7, isLoading }: SettingsBasicProps) {
     return (
         <div className="flex items-start gap-2 pt-2 border-t border-slate-200/60">
             <input

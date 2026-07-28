@@ -3,7 +3,7 @@ import * as utils from '../utils/settingsUtils';
 import SettingsAdvanced from './SettingsAdvanced';
 import SettingsBasic from './SettingsBasic';
 
-interface SettingsProps {
+export interface SettingsProps {
     maxLength: number | string;
     setMaxLength: (value: number | string) => void;
     minLength: number | string;
@@ -18,21 +18,23 @@ interface SettingsProps {
     isLoading: boolean;
 }
 
-export default function Settings(props: SettingsProps) {
+export default function Settings({ maxLength, setMaxLength, minLength, setMinLength,
+  minTm, setMinTm, numPrimers, setNumPrimers,
+  checkT7, setCheckT7, isLoading }: SettingsProps) {
     const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
 
     // Sprawdzamy przy użyciu utilsa, czy parametry są obecnie domyślne
     const isAlreadyDefault = utils.isDefaultSettings(
-        props.minTm, props.maxLength, props.minLength, props.numPrimers
+        minTm, maxLength, minLength, numPrimers
     );
 
     // Funkcja masowego przywracania wartości fabrycznych Stanforda
     const handleResetToDefault = () => {
-        if (props.isLoading) return;
-        props.setMinTm(60);
-        props.setMaxLength(60);
-        props.setMinLength(15);
-        props.setNumPrimers('');
+        if (isLoading) return;
+        setMinTm(60);
+        setMaxLength(60);
+        setMinLength(15);
+        setNumPrimers('');
     };
 
     return (
@@ -51,7 +53,7 @@ export default function Settings(props: SettingsProps) {
                 {showAdvanced && (
                     <button
                         onClick={handleResetToDefault}
-                        disabled={isAlreadyDefault || props.isLoading}
+                        disabled={isAlreadyDefault || isLoading}
                         type="button"
                         className="text-xs font-semibold transition-colors focus:outline-none disabled:text-slate-400 disabled:cursor-default text-blue-600 hover:text-blue-800 cursor-pointer"
                     >
@@ -61,13 +63,13 @@ export default function Settings(props: SettingsProps) {
             </div>
 
             {/* SEKCJA ZAAWANSOWANA */}
-            {showAdvanced && <SettingsAdvanced {...props} />}
+        {showAdvanced && <SettingsAdvanced  {...{ maxLength, setMaxLength, minLength, setMinLength, minTm, setMinTm, numPrimers, setNumPrimers, isLoading } } />}
 
             {/* SEKCJA PODSTAWOWA */}
             <SettingsBasic
-                checkT7={props.checkT7}
-                setCheckT7={props.setCheckT7}
-                isLoading={props.isLoading}
+                checkT7={checkT7}
+                setCheckT7={setCheckT7}
+                isLoading={isLoading}
             />
 
         </div>

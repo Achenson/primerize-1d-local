@@ -1,19 +1,12 @@
 
 import React from 'react';
 import * as utils from '../utils/settingsUtils';
+import {SettingsProps} from "./Settings"
 
-// Samodzielna definicja typu dla komponentu zaawansowanego
-interface AdvancedProps {
-    maxLength: number | string;
-    setMaxLength: (value: number | string) => void;
-    minLength: number | string;
-    setMinLength: (value: number | string) => void;
-    minTm: number | string;
-    setMinTm: (value: number | string) => void;
-    numPrimers: number | string;
-    setNumPrimers: (value: number | string) => void;
-    isLoading: boolean;
-}
+export type SettingsAdvancedProps = Omit<
+    SettingsProps,
+    'checkT7' | 'setCheckT7' | 'engineReady'
+>;
 
 export default function SettingsAdvanced({
     maxLength, setMaxLength,
@@ -21,7 +14,7 @@ export default function SettingsAdvanced({
     minTm, setMinTm,
     numPrimers, setNumPrimers,
     isLoading
-}: AdvancedProps) {
+}: SettingsAdvancedProps) {
     return (
         <div className="flex flex-col gap-4 pt-2 border-t border-slate-200/60 animate-fadeIn">
 
