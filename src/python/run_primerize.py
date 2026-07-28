@@ -19,8 +19,9 @@ for fake_mod in ["primerize.primerize_2d", "primerize.primerize_3d", "primerize.
 # =========================================================================
 
 # Bezpieczny i zoptymalizowany import oryginalnego silnika 1D
-from primerize.primerize_1d import Primerize_1D
-
+from primerize.primerize_1d import (  # type: ignore - Package is located in the client-side static public/ folder for Pyodide execution
+    Primerize_1D,
+)
 
 def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_primers=None, prefix="Oligo"):
     """Executes the Stanford Primerize engine efficiently with extended biochemical arguments."""
@@ -88,6 +89,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
 
             if i < total_primers - 1:
                 output.append("") # Subtelna czysta linia odstępu między starterami
+        clean_warnings = ""
 
         try:
             warnings_text = res.echo("WARNING")
@@ -100,8 +102,9 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
 
                 output.append(sub_sep)
                 output.append(clean_warnings)
-        except Exception:
-            pass
+        except Exception as e:  # noqa: BLE001 - Exception is intentionally logged to console to prevent Pyodide from crashing on unhandled layout edge-cases
+            print(f"Primerize layout engine captured an internal exception: {e}")
+
 
         output.append(sep)
 
@@ -110,7 +113,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
             "warning": clean_warnings if ('clean_warnings' in locals() and clean_warnings) else ""
         }
 
-    except Exception as inner_err:
+    except Exception as _inner_err:  # noqa: BLE001 - Catching general exception is required to safely forward unexpected core layout errors to the React state
         return {
             "terminal": f"Python Core Exception:\n{traceback.format_exc()}",
             "warning": ""
