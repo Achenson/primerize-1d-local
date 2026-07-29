@@ -1,65 +1,75 @@
 import React from 'react';
 
 interface SequenceInputProps {
-    sequence: string;
-    setSequence: (value: string) => void;
-    prefix: string; // NEW STATE
-    setPrefix: (value: string) => void; // NEW DISPATCHER
-    onCalculate: () => void;
-    engineReady: boolean;
-    isLoading: boolean;
-    clearError: () => void;
+  sequence: string;
+  setSequence: (value: string) => void;
+  prefix: string; // NEW STATE
+  setPrefix: (value: string) => void; // NEW DISPATCHER
+  onCalculate: () => void;
+  engineReady: boolean;
+  isLoading: boolean;
+  clearError: () => void;
 }
 
-export default function SequenceInput({ sequence, setSequence, prefix, setPrefix, onCalculate, engineReady, isLoading, clearError }: SequenceInputProps) {
-    return (
-        <div className="flex flex-col gap-4">
-
-        {/* NEW CONSTRUCT PREFIX INPUT FIELD */}
-        <div className="flex flex-col gap-1">
+export default function SequenceInput({
+  sequence,
+  setSequence,
+  prefix,
+  setPrefix,
+  onCalculate,
+  engineReady,
+  isLoading,
+  clearError,
+}: SequenceInputProps) {
+  return (
+    <div className="flex flex-col gap-4">
+      {/* NEW CONSTRUCT PREFIX INPUT FIELD */}
+      <div className="flex flex-col gap-1">
         <label className="block text-sm font-semibold text-slate-700">
-        Construct Name
+          Construct Name
         </label>
         <input
-        type="text"
-        className="w-full p-2 border border-slate-300 rounded font-mono text-sm focus:ring-1 focus:ring-blue-500 outline-none bg-white"
-        placeholder=""
-        value={prefix}
-        maxLength={20} // Original Stanford string length cap
-        onChange={(e) => {
+          type="text"
+          className="w-full rounded border border-slate-300 bg-white p-2 font-mono text-sm outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder=""
+          value={prefix}
+          maxLength={20} // Original Stanford string length cap
+          onChange={(e) => {
             const val = e.target.value;
             // Stanford strict verification match: allows letters, numbers, and underscores only
             const sanitizedVal = val.replace(/[^A-Za-z0-9_]/g, '');
             setPrefix(sanitizedVal);
-        }}
-        disabled={isLoading}
+          }}
+          disabled={isLoading}
         />
         <span className="text-[11px] text-slate-400 italic">
-        Alphanumeric and underscores only. Max 20 chars.
-    </span>
-    </div>
-        <div>
-        <label className="block text-sm font-semibold text-slate-700 mb-1">Sequence Input</label>
+          Alphanumeric and underscores only. Max 20 chars.
+        </span>
+      </div>
+      <div>
+        <label className="mb-1 block text-sm font-semibold text-slate-700">
+          Sequence Input
+        </label>
         <textarea
-        className="w-full p-2 border border-slate-300 rounded font-mono text-sm h-32 focus:ring-1 focus:ring-blue-500 outline-none"
-        placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"
-        value={sequence}
-        onChange={(e) => {
+          className="h-32 w-full rounded border border-slate-300 p-2 font-mono text-sm outline-none focus:ring-1 focus:ring-blue-500"
+          placeholder="Paste your ATCG or AUCG sequence here... (Sequence must be between 60 and 1000 bp long)"
+          value={sequence}
+          onChange={(e) => {
             setSequence(e.target.value);
             clearError();
-        }}
-//         disabled={!engineReady || isLoading}
-        disabled={isLoading}
+          }}
+          //         disabled={!engineReady || isLoading}
+          disabled={isLoading}
         />
-        </div>
+      </div>
 
-        <button
+      <button
         onClick={onCalculate}
         disabled={!engineReady || !sequence.trim() || isLoading}
-        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded transition-colors disabled:bg-slate-300 disabled:cursor-default cursor-pointer"
-        >
+        className="w-full cursor-pointer rounded bg-blue-600 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-default disabled:bg-slate-300"
+      >
         {isLoading ? 'Running Engine... Please wait' : 'Calculate Primers'}
-        </button>
-        </div>
-    );
+      </button>
+    </div>
+  );
 }

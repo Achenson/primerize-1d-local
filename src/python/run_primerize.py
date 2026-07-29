@@ -8,12 +8,23 @@ from types import ModuleType
 # Tworzymy puste moduły-widma w pamięci Pythona. Dzięki temu plik __init__.py
 # Stanforda nie uruchomi procesów kompilacji dla wersji 2D, 3D i Custom!
 # =========================================================================
-for fake_mod in ["primerize.primerize_2d", "primerize.primerize_3d", "primerize.primerize_custom"]:
+for fake_mod in [
+    "primerize.primerize_2d",
+    "primerize.primerize_3d",
+    "primerize.primerize_custom",
+]:
     if fake_mod not in sys.modules:
         dummy = ModuleType(fake_mod)
+
         class DummyClass:
-            def __init__(self, *args, **kwargs): pass
-        class_name = "Primerize_2D" if "2d" in fake_mod else ("Primerize_3D" if "3d" in fake_mod else "Primerize_Custom")
+            def __init__(self, *args, **kwargs):
+                pass
+
+        class_name = (
+            "Primerize_2D"
+            if "2d" in fake_mod
+            else ("Primerize_3D" if "3d" in fake_mod else "Primerize_Custom")
+        )
         setattr(dummy, class_name, DummyClass)
         sys.modules[fake_mod] = dummy
 # =========================================================================
@@ -23,7 +34,15 @@ from primerize.primerize_1d import (  # type: ignore - Package is located in the
     Primerize_1D,
 )
 
-def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_primers=None, prefix="Oligo"):
+
+def run_design(
+    user_sequence,
+    max_length=60,
+    min_length=15,
+    min_tm=60,
+    num_primers=None,
+    prefix="Oligo",
+):
     """Executes the Stanford Primerize engine efficiently with extended biochemical arguments."""
     try:
         max_len_int = int(max_length)
@@ -42,7 +61,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
             NUM_PRIMERS=num_primers_val,
             MAX_LENGTH=max_len_int,
             MIN_LENGTH=min_len_int,
-            MIN_TM=min_tm_float
+            MIN_TM=min_tm_float,
         )
 
         # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna i nie łamały się
@@ -59,11 +78,15 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
 
         # ROZBUDOWANA LINIA METADANYCH: Wyświetla jednocześnie wszystkie ograniczenia długości oraz temperaturę topnienia Tm
         #
-        output.append(f"Min Tm: {min_tm_float}°C | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp")
+        output.append(
+            f"Min Tm: {min_tm_float}°C | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp"
+        )
 
         # POPRAWKA 2: Dodanie linii wskazującej zdefiniowane ustawienie dla Number of Primers
         # Jeśli użytkownik pozostawił boks pusty, num_primers_val to None, czyli wyświetlamy "Auto"
-        primers_setting_text = "Auto" if num_primers_val is None else str(num_primers_val)
+        primers_setting_text = (
+            "Auto" if num_primers_val is None else str(num_primers_val)
+        )
         output.append(f"Number of Primers Constraint: {primers_setting_text}")
 
         primers_list = getattr(res, "primer_set", [])
@@ -79,7 +102,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
             direction = "F" if i < half else "R"
 
             # Konstruujemy identyfikator identycznie jak w oryginalnym narzędziu Stanforda
-            p_id = f"{prefix}_{i+1}{direction}"
+            p_id = f"{prefix}_{i + 1}{direction}"
             p_seq = str(primer).strip().upper()
 
             # Nowy, czytelny układ: Nazwa i długość w nagłówku, czysta sekwencja w linii poniżej
@@ -87,7 +110,7 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
             output.append(p_seq)
 
             if i < total_primers - 1:
-                output.append("") # Subtelna czysta linia odstępu między starterami
+                output.append("")  # Subtelna czysta linia odstępu między starterami
         clean_warnings = ""
 
         try:
@@ -96,7 +119,10 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
 
             if warnings_text and warnings_text != "None":
                 import re
-                ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|\[\d+m")
+
+                ansi_escape = re.compile(
+                    r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])|\[\d+m"
+                )
                 clean_warnings = ansi_escape.sub("", warnings_text).strip()
 
                 output.append(sub_sep)
@@ -104,16 +130,17 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
         except Exception as e:  # noqa: BLE001 - Exception is intentionally logged to console to prevent Pyodide from crashing on unhandled layout edge-cases
             print(f"Primerize layout engine captured an internal exception: {e}")
 
-
         output.append(sep)
 
         return {
             "terminal": "\n".join(output),
-            "warning": clean_warnings if ('clean_warnings' in locals() and clean_warnings) else ""
+            "warning": clean_warnings
+            if ("clean_warnings" in locals() and clean_warnings)
+            else "",
         }
 
     except Exception as _inner_err:  # noqa: BLE001 - Catching general exception is required to safely forward unexpected core layout errors to the React state
         return {
             "terminal": f"Python Core Exception:\n{traceback.format_exc()}",
-            "warning": ""
+            "warning": "",
         }
