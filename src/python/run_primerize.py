@@ -58,7 +58,8 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
         output.append(clean_seq_str)
 
         # ROZBUDOWANA LINIA METADANYCH: Wyświetla jednocześnie wszystkie ograniczenia długości oraz temperaturę topnienia Tm
-        output.append(f"Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp | Min Tm: {min_tm_float}°C")
+        #
+        output.append(f"Min Tm: {min_tm_float}°C | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp")
 
         # POPRAWKA 2: Dodanie linii wskazującej zdefiniowane ustawienie dla Number of Primers
         # Jeśli użytkownik pozostawił boks pusty, num_primers_val to None, czyli wyświetlamy "Auto"

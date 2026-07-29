@@ -195,7 +195,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
         // WERYFIKACJA METADANYCH: Sprawdzamy czy zmodyfikowane parametry poprawnie wyświetlają się w outpucie
         await expect(resultsTerminal).toContainText('Input Sequence (95 bp):');
-        await expect(resultsTerminal).toContainText('Max Limit: 60 bp | Min Limit: 34 bp | Min Tm: 59.0°C');
+        await expect(resultsTerminal).toContainText('Min Tm: 59.0°C | Max Limit: 60 bp | Min Limit: 34 bp');
         await expect(resultsTerminal).toContainText('Number of Primers Constraint: 4');
         await expect(resultsTerminal).toContainText('Number of Primers Designed: 4');
 
