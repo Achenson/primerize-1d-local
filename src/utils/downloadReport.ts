@@ -6,10 +6,17 @@ interface DownloadReportParams {
 }
 
 export function downloadReportTxt({ results, prefix }: DownloadReportParams): void {
-    if (!results) return;
+  if (!results) return;
+
+  // Czyścimy tekst z linii przerywanych i poziomych:
+  // /={3,}/g wykrywa 3 lub więcej znaków "=" pod rząd
+  // /-{3,}/g wykrywa 3 lub więcej znaków "-" pod rząd
+  const cleanedResults = results
+      .replace(/={3,}/g, '')
+      .replace(/-{3,}/g, '');
 
     // Create a file blob with the plain text terminal content
-    const blob = new Blob([results], { type: 'text/plain;charset=utf-8' });
+    const blob = new Blob([cleanedResults], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
 
     // Determine the file name dynamically based on the construct name prefix
