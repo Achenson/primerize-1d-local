@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
 
-    test('should generate correct primers for hGln_TTG_3-1_CCA (promoter added automatically)', async ({ page }) => {
+    test('should generate correct primers for hGln_TTG_3-1_CCA (promoter should be added automatically)', async ({ page }) => {
         const testSequence = 'GGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAATCTCGGTGGGACCTCCA';
 
         // Oczekiwane sekwencje starterów wyliczone przez algorytm Stanforda
@@ -41,7 +41,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(resultsTerminal).toContainText('58');
     });
 
-    test('should generate misprime warning for mtThr_TGT_1 (promoter in the sequence)', async ({ page }) => {
+    test('should generate misprime warning for mtThr_TGT_1 (promoter already in the sequence)', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
 
         // 1. Navigate to the local server build
@@ -78,7 +78,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(errorAlert).not.toBeVisible();
     });
 
-    test('should generate correct primers at max primer lenght 70 for mtThr_TGT_1 (promoter in the sequence) without misprime warning', async ({ page }) => {
+    test('should generate correct primers at max primer length 70 for mtThr_TGT_1 (promoter already in the sequence) without misprime warning', async ({ page }) => {
         const testSequence = 'TTCTAATACGACTCACTATAgGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATGAAAACCTTTTTCCAAGGACACCA';
 
         const expected70Primer1 = 'TTCTAATACGACTCACTATAGGTCCTTGTAGTATAAACTAATACACCAGTCTTGTAAACCGGAGATG';
@@ -133,7 +133,7 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         await expect(warningAlert).not.toBeVisible();
     });
 
-    test('should generate correct primers for hGln_TTG_3-1_CCA for custom number of primers, min length and min Tm', async ({ page }) => {
+    test('should generate correct primers for hGln_TTG_3-1_CCA (promoter should be added automatically) for custom number of primers, min length and min Tm', async ({ page }) => {
         const testSequence = 'GGCCCCATGGTGTAATGGTTAGCACTCTGGACTTTGAATCCAGCGATCCGAGTTCAAATCTCGGTGGGACCTCCA';
 
         const expectedPrimer1 = 'TTCTAATACGACTCACTATAGGCCCCATGGTGTAA';
