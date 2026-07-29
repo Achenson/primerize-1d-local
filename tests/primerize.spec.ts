@@ -63,7 +63,6 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
         const resultsTerminal = page.getByTestId('primerize-terminal');
         await expect(resultsTerminal).toBeVisible();
         // POPRAWKA: Zmiana tekstu na aktualny nagłówek z run_primerize.py
-        await expect(resultsTerminal).toContainText('STANFORD PRIMERIZE 1D TERMINAL REPORT');
 
         // 6. Verify the biological warning alert box exists using data-testid (Future-proof)
         const warningAlert = page.getByTestId('primerize-warning');

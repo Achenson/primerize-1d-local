@@ -51,8 +51,6 @@ def run_design(user_sequence, max_length=60, min_length=15, min_tm=60, num_prime
 
         output = []
         output.append(sep)
-        output.append("STANFORD PRIMERIZE 1D TERMINAL REPORT")
-        output.append(sep)
 
         # POPRAWKA 1: Przeniesienie długości do linii nagłówka sekwencji wejściowej
         clean_seq_str = str(user_sequence).strip().upper()
