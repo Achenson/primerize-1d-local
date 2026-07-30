@@ -10,6 +10,7 @@ export default function Notifications({
   if (!message) return null;
 
   if (variant === 'warning') {
+    //the notification already has one "Warning"
     const cleanMessage =
       typeof message === 'string'
         ? message.replace(/WARNING:\s*/g, '').trim()
@@ -31,7 +32,7 @@ export default function Notifications({
     );
   }
 
-  // Zunifikowany styl dla variant === 'error' z dodanym nagłówkiem
+  // variant === 'error'
   return (
     <div
       data-testid="primerize-error"

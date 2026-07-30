@@ -1,62 +1,53 @@
-// src/components/PrimerizeWasmPython.tsx
-import React, { useState } from 'react';
-import { executePrimerizeDesign } from '../utils/executePrimerizeDesign';
-// Import the custom initialization hook
-import { usePrimerizeEngine } from '../hooks/usePrimerizeEngine';
+import { useState } from 'react';
 
-// Import UI sub-components
-import Settings from './Settings';
-import SequenceInput from './SequenceInput';
+import { usePrimerizeEngine } from '../hooks/usePrimerizeEngine';
+import { executePrimerizeDesign } from '../utils/executePrimerizeDesign';
+
 import Notifications from './Notifications';
 import Results from './Results';
+import SequenceInput from './SequenceInput';
+import Settings from './Settings';
 
 export default function PrimerizeWasmPython() {
   const [sequence, setSequence] = useState<string>('');
-  const [prefix, setPrefix] = useState<string>(''); // NEW CONSTRUCT NAME STATE
+  // construct's name
+  const [prefix, setPrefix] = useState<string>('');
   const [results, setResults] = useState<string>('');
+
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [validationError, setValidationError] = useState<string>('');
-  const [engineWarning, setEngineWarning] = useState<string>(''); // NEW BIOLOGICAL WARNING STATE
-  const [maxLength, setMaxLength] = useState<number | string>(60);
-  const [minLength, setMinLength] = useState<number | string>(15); // NEW STATE (Defaults to 15 bp)
-  const [minTm, setMinTm] = useState<number | string>(60);
-  const [numPrimers, setNumPrimers] = useState<number | string>('');
+  const [engineWarning, setEngineWarning] = useState<string>('');
 
-  // 1. ADD T7 CHECKBOX STATE (Defaults to true matching Stanford's default settings)
+  const [minTm, setMinTm] = useState<number | string>(60);
+  const [maxLength, setMaxLength] = useState<number | string>(60);
+  const [minLength, setMinLength] = useState<number | string>(15);
+  const [numPrimers, setNumPrimers] = useState<number | string>('');
   const [checkT7, setCheckT7] = useState<boolean>(true);
 
-  // CONSUME THE CUSTOM HOOK
-  const { status, pyodideInstance, isLoadingEngine } = usePrimerizeEngine();
+  const { status, pyodideInstance } = usePrimerizeEngine();
   const isReady = status === 'Ready';
 
   const handleDesign = async () => {
     setValidationError('');
-    setEngineWarning(''); // Clear any previous biochemical warnings
+    setEngineWarning('');
     setResults('');
     setIsLoading(true);
 
     try {
       const {
         scriptOutput,
-        operationalMaxLength,
-        operationalMinLength,
         engineWarning: capturedWarning,
         updatedSequence,
       } = await executePrimerizeDesign({
         sequence,
         maxLength,
         minLength,
-        minTm, // Przekazanie Tm
-        numPrimers, // Przekazanie liczby starterów
+        minTm,
+        numPrimers,
         prefix,
         pyodideInstance,
         checkT7,
       });
-
-      // Sync any metadata fallback modifications returned back up from the runtime module:
-      if (minLength !== operationalMinLength) {
-        setMinLength(operationalMinLength);
-      }
 
       // 3. OPTIONAL VISUAL FEEDBACK: Update the textarea to reflect the prepended sequence
       if (sequence.trim().toUpperCase() !== updatedSequence) {
@@ -70,9 +61,6 @@ export default function PrimerizeWasmPython() {
         setEngineWarning(capturedWarning);
       }
 
-      if (maxLength !== operationalMaxLength) {
-        setMaxLength(operationalMaxLength);
-      }
     } catch (error: any) {
       // This catches fatal blockages (e.g. invalid letters, 0 primers built)
       setValidationError(error.message);

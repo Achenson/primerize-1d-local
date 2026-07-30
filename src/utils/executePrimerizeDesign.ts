@@ -13,8 +13,6 @@ interface DesignParams {
 
 interface DesignResult {
   scriptOutput: string;
-  operationalMaxLength: number;
-  operationalMinLength: number;
   engineWarning: string;
   updatedSequence: string;
 }
@@ -148,8 +146,6 @@ export async function executePrimerizeDesign({
 
   return {
     scriptOutput,
-    operationalMaxLength,
-    operationalMinLength,
     engineWarning,
     updatedSequence: cleanSeq,
   };
