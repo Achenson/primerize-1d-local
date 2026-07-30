@@ -1,12 +1,11 @@
-# src/python/run_primerize.py
 import sys
 import traceback
 from types import ModuleType
 
 # =========================================================================
-# BLOK BLOKOWANIA MODUŁÓW 2D/3D (PRZYSPIESZENIE STRONY)
-# Tworzymy puste moduły-widma w pamięci Pythona. Dzięki temu plik __init__.py
-# Stanforda nie uruchomi procesów kompilacji dla wersji 2D, 3D i Custom!
+# 2d/3d module blocking block (page acceleration)
+# we create empty ghost modules in python's memory. this prevents stanford's
+# __init__.py from triggering compilation processes for 2d, 3d, and custom versions!
 # =========================================================================
 for fake_mod in [
     "primerize.primerize_2d",
@@ -29,7 +28,6 @@ for fake_mod in [
         sys.modules[fake_mod] = dummy
 # =========================================================================
 
-# Bezpieczny i zoptymalizowany import oryginalnego silnika 1D
 from primerize.primerize_1d import (  # type: ignore - Package is located in the client-side static public/ folder for Pyodide execution
     Primerize_1D,
 )
@@ -49,12 +47,12 @@ def run_design(
         min_len_int = int(min_length)
         min_tm_float = float(min_tm)
 
-        # Jeśli JavaScript przekazał null, NUM_PRIMERS w silniku musi dostać None dla automatycznego wyliczenia
+        # if javascript passed null, NUM_PRIMERS in the engine must receive None for automatic calculation
         num_primers_val = int(num_primers) if num_primers is not None else None
 
         p = Primerize_1D()
 
-        # Wywołujemy oficjalną metodę design() silnika Stanford / RiboKit z kompletem parametrów
+        # invoke the official design() method from the stanford / ribokit engine with the full set of parameters
         res = p.design(
             str(user_sequence).strip().upper(),
             prefix=prefix,
@@ -64,26 +62,24 @@ def run_design(
             MIN_TM=min_tm_float,
         )
 
-        # Skracamy linie separatorów do 48 znaków, aby idealnie pasowały do szerokości okna i nie łamały się
+        # separator lines matching the window width
+
         sep = "=" * 69
         sub_sep = "-" * 69
 
         output = []
         output.append(sep)
 
-        # POPRAWKA 1: Przeniesienie długości do linii nagłówka sekwencji wejściowej
         clean_seq_str = str(user_sequence).strip().upper()
         output.append(f"Input Sequence ({len(clean_seq_str)} bp):")
         output.append(clean_seq_str)
 
-        # ROZBUDOWANA LINIA METADANYCH: Wyświetla jednocześnie wszystkie ograniczenia długości oraz temperaturę topnienia Tm
-        #
         output.append(
             f"Min Tm: {min_tm_float}°C | Max Limit: {max_len_int} bp | Min Limit: {min_len_int} bp"
         )
 
-        # POPRAWKA 2: Dodanie linii wskazującej zdefiniowane ustawienie dla Number of Primers
-        # Jeśli użytkownik pozostawił boks pusty, num_primers_val to None, czyli wyświetlamy "Auto"
+        # add a line indicating the specified setting for number of primers
+        # if the user left the box empty, num_primers_val is none, so we display "auto"
         primers_setting_text = (
             "Auto" if num_primers_val is None else str(num_primers_val)
         )
@@ -92,7 +88,7 @@ def run_design(
         primers_list = getattr(res, "primer_set", [])
         output.append(f"Number of Primers Designed: {len(primers_list)}")
 
-        # Minimalistyczne przejście od razu do listy wygenerowanych starterów
+        # minimalist transition straight to the generated primers list
         output.append(sub_sep)
 
         total_primers = len(primers_list)
@@ -101,22 +97,22 @@ def run_design(
         for i, primer in enumerate(primers_list):
             direction = "F" if i < half else "R"
 
-            # Konstruujemy identyfikator identycznie jak w oryginalnym narzędziu Stanforda
+            # construct the identifier identically to the original Stanford tool
             p_id = f"{prefix}_{i + 1}{direction}"
             p_seq = str(primer).strip().upper()
 
-            # Nowy, czytelny układ: Nazwa i długość w nagłówku, czysta sekwencja w linii poniżej
             output.append(f"{p_id} ({len(p_seq)} bp)")
             output.append(p_seq)
 
             if i < total_primers - 1:
-                output.append("")  # Subtelna czysta linia odstępu między starterami
+                output.append("")
         clean_warnings = ""
 
         try:
             warnings_text = res.echo("WARNING")
             warnings_text = str(warnings_text).strip()
 
+            # extract, strip ansi color codes, and format engine warnings for the ui output
             if warnings_text and warnings_text != "None":
                 import re
 
