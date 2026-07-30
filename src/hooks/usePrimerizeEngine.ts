@@ -139,6 +139,9 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
     return () => {
       isMounted = false;
     };
+    // Intentional empty deps. Including 'primerizeRunnerScript' here would break
+    // Hot Module Replacement (HMR) during development, forcing a full
+    // WebAssembly/Pyodide re-initialization on every single file save.
   }, []);
 
   return {
