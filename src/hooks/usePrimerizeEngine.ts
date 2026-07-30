@@ -1,4 +1,3 @@
-// /src/hooks/usePrimerizeEngine.ts
 import { useState, useEffect } from 'react';
 // @ts-ignore - Vite uses the '?raw' suffix to import the Python script as a plain text string, which TS doesn't natively recognize as a module.
 import primerizeRunnerScript from '../python/run_primerize.py?raw';
@@ -6,7 +5,6 @@ import primerizeRunnerScript from '../python/run_primerize.py?raw';
 export interface UsePrimerizeEngineResult {
   status: string;
   pyodideInstance: any;
-  isLoadingEngine: boolean;
 }
 
 export function usePrimerizeEngine(): UsePrimerizeEngineResult {
@@ -20,7 +18,6 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
     async function initPythonWasm() {
       try {
-        // 1. WCZYTANIE BIBLIOTEKI GLÓWNEGO PYODIDE Z CDN (WERSJA 0.26.1)
         if (!(window as Window & { loadPyodide?: unknown }).loadPyodide) {
           setStatus('Loading Pyodide script library into page thread...');
           const script = document.createElement('script');
@@ -37,7 +34,6 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
         if (!isMounted) return;
 
-        // 2. INICJALIZACJA INSTANCJI Z PRECYZYJNYM INDEXURL (WERSJA 0.26.1)
         setStatus('Initializing Pyodide virtual instance runtime...');
         // Type set to 'any' because loadPyodide is attached
         // globally to the window object by an external CDN script at runtime.
@@ -47,14 +43,12 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
         if (!isMounted) return;
 
-        // 3. ŁADOWANIE KRYTYCZNYCH PAKIETÓW MATEMATYCZNYCH (NUMPY + MICROPIP)
-        // Numpy waży niewiele i jest niezbędny do obliczeń macierzy delH/delS.
         setStatus('Loading required scientific packages...');
         await pyodide.loadPackage(['micropip', 'numpy']);
 
         if (!isMounted) return;
 
-        // 4. INSTALACJA PAKIETU XLWT BEZ DODATKOWYCH ZALEZNOSCI (DEPS=FALSE)
+        // XLWT without dependencies (DEPS=FALSE)
         setStatus('Installing file export extensions...');
         await pyodide.runPythonAsync(`
                 import micropip
@@ -63,7 +57,6 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
         if (!isMounted) return;
 
-        // 5. TWORZENIE WIRTUALNEGO SYSTEMU PLIKÓW DLA SILNIKA STANFORDA
         setStatus('Creating virtual filesystem for Stanford Primerize...');
         try {
           pyodide.FS.mkdir('primerize');
@@ -96,30 +89,26 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
         if (!isMounted) return;
 
-        // 6. BLOKADA WYŁĄCZNIE CIĘŻKICH BIBLIOTEK GRAFICZNYCH (MATPLOTLIB I PILLOW)
         setStatus('Loading Stanford Primerize core algorithms...');
 
-        // Wywołujemy synchroniczne .runPython() dla idealnego odcięcia skanera JS
-        // /src/hooks/usePrimerizeEngine.ts
-
-        // ZNAJDŹ SEKCJĘ 6 I PODMIEŃ W NIEJ CAŁY KOD WEWNĄTRZ pyodide.runPython NA TEN:
+        // synchronous .runPython() for a clean separation from the JS scanner.
         pyodide.runPython(`
                 import sys
                 from types import ModuleType
 
-                # Inteligentna atrapa, która potrafi podać wersję tekstową lub zwrócić pustą funkcję
+                # Smart mock capable of providing a version string or returning an empty function
                 class DummyMock(ModuleType):
                     def __getattr__(self, name):
-                    # Jeśli kod Stanforda pyta o wersję Matplotlib, podajemy poprawny ciąg tekstowy
+                    # If the Stanford core code requests the Matplotlib version, return a valid version string
                         if name == "__version__":
                             return "3.0.0"
 
-                        # Dla wszystkich innych wywołań zwracamy bezpieczną, pustą funkcję
+                        # For all other property or method calls, return a safe, empty fallback function
                         def dummy_func(*args, **kwargs):
                             return None
                         return dummy_func
 
-                    # Blokujemy ciężki silnik rysowania wykresów (Matplotlib, Pillow, Fonttools)
+                    # Block heavy rendering engines and graphing libraries (Matplotlib, Pillow, Fonttools)
                 for heavy_mod in ["matplotlib", "matplotlib.pyplot", "Pillow", "PIL", "kiwisolver", "cycler", "fonttools"]:
                     if heavy_mod not in sys.modules:
                         sys.modules[heavy_mod] = DummyMock(heavy_mod)
@@ -127,8 +116,7 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
                 if "." not in sys.path:
                     sys.path.append(".")
                 `);
-
-        // 7. ZAPIS SKRYPTU ORKIESTRACJI I FINALIZACJA STARTU
+        // Writes the Python orchestration script into Pyodide's virtual file system so it can be imported.
         pyodide.FS.writeFile('run_primerize.py', primerizeRunnerScript);
 
         if (!isMounted) return;
@@ -154,7 +142,6 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
   return {
     status,
-    pyodideInstance,
-    isLoadingEngine: status !== 'Ready',
+    pyodideInstance
   };
 }
