@@ -1,70 +1,62 @@
-// src/utils/settingsUtils.ts
-
-// =========================================================================
-// FUNKCJE WALIDACJI W LOCIE (ON-CHANGE - BLOKADA GÓRNEJ GRANICY)
-// =========================================================================
+//real-time validation functions (on-change - upper limit restriction)
 
 export const cleanTmChange = (valStr: string): string | null => {
   if (valStr === '') return '';
-  if (Number(valStr) > 80) return null; // Ignorujemy zmianę jeśli powyżej 80°C
+  if (Number(valStr) > 80) return null;
   return valStr;
 };
 
 export const cleanMaxChange = (valStr: string): string | null => {
   if (valStr === '') return '';
-  if (Number(valStr) > 120) return null; // Ignorujemy zmianę jeśli powyżej 120 bp
+  if (Number(valStr) > 120) return null;
   return valStr;
 };
 
 export const cleanMinChange = (valStr: string): string | null => {
   if (valStr === '') return '';
-  if (Number(valStr) > 60) return null; // Ignorujemy zmianę jeśli powyżej 60 bp
+  if (Number(valStr) > 60) return null;
   return valStr;
 };
 
 export const cleanNumPrimersChange = (valStr: string): string | null => {
   if (valStr === '') return '';
-  if (Number(valStr) > 50) return null; // Ignorujemy zmianę jeśli powyżej 50 starterów
+  if (Number(valStr) > 50) return null;
   return valStr;
 };
 
-// =========================================================================
-// FUNKCJE KOREKTY PO OPUSZCZENIU POLA (ON-BLUR - AUTOMATYCZNE UZUPEŁNIANIE)
-// =========================================================================
+// Field exit correction functions (on-blur - automatic fallback values)
 
 export const cleanTmBlur = (value: number | string): number => {
-  if (value === '') return 60; // Domyślna Stanford
+  if (value === '') return 60;
   const val = Number(value);
-  if (val < 50) return 50; // Minimalna granica
+  if (val < 50) return 50;
   return val;
 };
 
 export const cleanMaxBlur = (value: number | string): number => {
-  if (value === '') return 60; // Domyślna Stanford
+  if (value === '') return 60;
   const val = Number(value);
-  if (val < 15) return 15; // Minimalna granica
+  if (val < 15) return 15;
   return val;
 };
 
 export const cleanMinBlur = (value: number | string): number => {
-  if (value === '') return 15; // Domyślna Stanford
+  if (value === '') return 15;
   const val = Number(value);
-  if (val < 10) return 10; // Minimalna granica
+  if (val < 10) return 10;
   return val;
 };
 
 export const cleanNumPrimersBlur = (
   value: number | string,
 ): number | string => {
-  if (value === '') return ''; // Pozwalamy na puste (Auto)
+  if (value === '') return ''; // Blank is allowed (Auto)
   const val = Number(value);
-  if (val < 2) return 2; // Minimalna granica
+  if (val < 2) return 2;
   return value;
 };
 
-/**
- * Zwraca true, jeśli wszystkie zaawansowane parametry mają wartości domyślne.
- */
+// returns true if all advanced parameters match their default values
 export const isDefaultSettings = (
   minTm: number | string,
   maxLength: number | string,

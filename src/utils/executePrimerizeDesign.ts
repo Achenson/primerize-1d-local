@@ -1,5 +1,3 @@
-// src/utils/executePrimerizeDesign.ts
-
 interface DesignParams {
   sequence: string;
   maxLength: number | string;
@@ -36,13 +34,13 @@ export async function executePrimerizeDesign({
     throw new Error('Python WebAssembly engine is not initialized.');
   }
 
-  // 1. AUTOMATYZACJA FRONTENDU: Doklejanie promotora T7 jeśli zaznaczone i brakuje go na start
+  // Prepending T7 promoter if missing and if checkbox is checked
   const T7_PROMOTER = 'TTCTAATACGACTCACTATA';
   if (checkT7 && !cleanSeq.startsWith(T7_PROMOTER)) {
     cleanSeq = T7_PROMOTER + cleanSeq;
   }
 
-  // FRONTENDOWA REPLIKACJA SPRAWDZANIA PROMOTORA T7 (ZASADY STANFORDA)
+  // Warnings for suboptimal number of Gs at the start of the sequence
   let t7GWarning = '';
   if (cleanSeq.startsWith(T7_PROMOTER)) {
     const initiationBases = cleanSeq.substring(
@@ -66,7 +64,6 @@ export async function executePrimerizeDesign({
     }
   }
 
-  // 2. RESTRYKCYJNA WALIDACJA NUKLEOTYDÓW
   const strictPureRegex = /^[ACGTU]+$/;
   if (!strictPureRegex.test(cleanSeq)) {
     throw new Error(
@@ -74,7 +71,6 @@ export async function executePrimerizeDesign({
     );
   }
 
-  // 3. WALIDACJA DŁUGOŚCI SEKWENCJI WEJŚCIOWEJ
   const seqLength = cleanSeq.length;
   if (seqLength < 60) {
     throw new Error(
@@ -87,7 +83,7 @@ export async function executePrimerizeDesign({
     );
   }
 
-  // 4. SANITYZACJA PARAMETRÓW BIOINFORMATYCZNYCH PRZED PRZEKAZANIEM DO PYTHONA
+  // Bioinformatics parameter sanitization before passing to python
   const operationalMaxLength =
     maxLength === '' ? 60 : Math.min(120, Math.max(15, Number(maxLength)));
   const operationalMinLength =
@@ -99,7 +95,7 @@ export async function executePrimerizeDesign({
 
   const activePrefix = prefix.trim() === '' ? 'Oligo' : prefix.trim();
 
-  // 5. REJESTRACJA PARAMETRÓW W GLOBALNYM ŚRODOWISKU WASM (BEZPIECZEŃSTWO EVENT LOOP)
+  // register parameters in the global wasm environment (event loop safety)
   pyodideInstance.globals.set('user_sequence', cleanSeq);
   pyodideInstance.globals.set('js_max_length', operationalMaxLength);
   pyodideInstance.globals.set('js_min_length', operationalMinLength);
@@ -107,14 +103,14 @@ export async function executePrimerizeDesign({
   pyodideInstance.globals.set('js_num_primers', operationalNumPrimers);
   pyodideInstance.globals.set('js_prefix', activePrefix);
 
-  // 6. URUCHOMIENIE SILNIKA PYTHON
+  // Launching the python engine
   const pyProxyResult = pyodideInstance.runPython(`
     import run_primerize
     import importlib
 
     importlib.reload(run_primerize)
 
-    # Wywołujemy funkcję orkiestracji przekazując bezpieczne odwołania do zmiennych globalnych
+    # Invoke the orchestration function, passing safe references to global variables
     run_primerize.run_design(
         user_sequence,
         max_length=js_max_length,
@@ -131,7 +127,7 @@ export async function executePrimerizeDesign({
   const scriptOutput = resultObj.terminal;
   let engineWarning = resultObj.warning || '';
 
-  // 7. ŁĄCZENIE OSTRZEŻEŃ FRONTENDOWYCH (T7) ORAZ TERMODYNAMICZNYCH Z SILNIKA
+  // combine frontend warnings (t7) and thermodynamic warnings from the engine
   if (t7GWarning) {
     engineWarning = engineWarning
       ? `${t7GWarning}\n\n${engineWarning}`

@@ -1,5 +1,3 @@
-// src/utils/downloadReport.ts
-
 interface DownloadReportParams {
   results: string;
   prefix: string;
@@ -11,9 +9,9 @@ export function downloadReportTxt({
 }: DownloadReportParams): void {
   if (!results) return;
 
-  // Czyścimy tekst z linii przerywanych i poziomych:
-  // /={3,}/g wykrywa 3 lub więcej znaków "=" pod rząd
-  // /-{3,}/g wykrywa 3 lub więcej znaków "-" pod rząd
+  // Remove divider strings and horizontal lines:
+  // /={3,}/g matches 3 or more consecutive "=" characters
+  // /-{3,}/g matches 3 or more consecutive "-" characters
   const cleanedResults = results.replace(/={3,}/g, '').replace(/-{3,}/g, '');
 
   // Create a file blob with the plain text terminal content
