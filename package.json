@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "format": "prettier --write \"{src,tests}/**/*.{ts,tsx}\" && ruff check --select I --fix ./src ./tests && ruff format ./src ./tests"
+    "format": "npx prettier --write \"{src,tests}/**/*.{ts,tsx}\" && ruff check --select I --fix ./src ./tests && ruff format ./src ./tests"
   },
   "dependencies": {
     "react": "^19.2.7",
