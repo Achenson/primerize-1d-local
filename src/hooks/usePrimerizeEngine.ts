@@ -32,6 +32,7 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
           });
         }
 
+        // Prevents state updates and double-initialization if the component unmounts.
         if (!isMounted) return;
 
         setStatus('Initializing Pyodide virtual instance runtime...');
@@ -142,6 +143,6 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
 
   return {
     status,
-    pyodideInstance
+    pyodideInstance,
   };
 }
