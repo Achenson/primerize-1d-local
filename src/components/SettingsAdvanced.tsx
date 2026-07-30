@@ -1,5 +1,5 @@
-import React from 'react';
 import * as utils from '../utils/settingsUtils';
+
 import { SettingsProps } from './Settings';
 
 export type SettingsAdvancedProps = Omit<
@@ -20,7 +20,6 @@ export default function SettingsAdvanced({
 }: SettingsAdvancedProps) {
   return (
     <div className="animate-fadeIn flex flex-col gap-4 border-t border-slate-200/60 pt-2">
-      {/* POZYCJA 1: MINIMUM TM */}
       <div className="flex flex-col gap-1">
         <label className="block text-xs font-semibold text-slate-600">
           Minimum Tm
@@ -45,7 +44,6 @@ export default function SettingsAdvanced({
         </div>
       </div>
 
-      {/* POZYCJA 2: MAX OLIGO LENGTH LIMIT */}
       <div className="flex flex-col gap-1">
         <label className="block text-xs font-semibold text-slate-600">
           Max Oligo Length Limit
@@ -70,7 +68,6 @@ export default function SettingsAdvanced({
         </div>
       </div>
 
-      {/* POZYCJA 3: MIN OLIGO LENGTH LIMIT */}
       <div className="flex flex-col gap-1">
         <label className="block text-xs font-semibold text-slate-600">
           Min Oligo Length Limit
@@ -95,7 +92,6 @@ export default function SettingsAdvanced({
         </div>
       </div>
 
-      {/* POZYCJA 4: NUMBER OF PRIMERS */}
       <div className="flex flex-col gap-1">
         <label className="block text-xs font-semibold text-slate-600">
           Number of Primers

@@ -1,5 +1,3 @@
-// src/components/Results.tsx
-import React from 'react';
 import { downloadReportTxt } from '../utils/downloadReport';
 
 interface ResultsProps {
@@ -22,11 +20,6 @@ export default function Results({
           Results Output
         </label>
 
-        {/*
-            - whitespace-pre-wrap: Gwarantuje, że okno nie spuchnie.
-            - break-words: Zapewnia estetyczne zawijanie długich ciągów.
-            - Brak suwaków na dole strony – wszystko mieści się w pionie.
-            */}
         <div
           data-testid="primerize-terminal"
           className="max-h-90 min-h-[150px] w-full overflow-y-auto rounded border border-slate-950 bg-slate-900 p-3 font-mono text-xs leading-relaxed wrap-break-word whitespace-pre-wrap text-emerald-400 shadow-inner"

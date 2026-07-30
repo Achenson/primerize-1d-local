@@ -1,7 +1,3 @@
-// PODKOMPONENT: SEKCJA PODSTAWOWA
-// ==========================================
-//
-
 interface SettingsBasicProps {
   checkT7: boolean;
   setCheckT7: (value: boolean) => void;
@@ -23,8 +19,6 @@ export default function SettingsBasic({
         onChange={(e) => setCheckT7(e.target.checked)}
         disabled={isLoading}
       />
-
-      {/* The label is now the flex column container */}
       <label
         htmlFor="checkT7"
         className="group flex cursor-pointer flex-col select-none"

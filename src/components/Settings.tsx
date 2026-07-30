@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+
 import * as utils from '../utils/settingsUtils';
+
 import SettingsAdvanced from './SettingsAdvanced';
 import SettingsBasic from './SettingsBasic';
 
@@ -33,7 +35,7 @@ export default function Settings({
 }: SettingsProps) {
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
 
-  // Sprawdzamy przy użyciu utilsa, czy parametry są obecnie domyślne
+  // Are the parameters values default
   const isAlreadyDefault = utils.isDefaultSettings(
     minTm,
     maxLength,
@@ -41,7 +43,6 @@ export default function Settings({
     numPrimers,
   );
 
-  // Funkcja masowego przywracania wartości fabrycznych Stanforda
   const handleResetToDefault = () => {
     if (isLoading) return;
     setMinTm(60);
@@ -52,7 +53,6 @@ export default function Settings({
 
   return (
     <div className="flex flex-col gap-4 rounded-md border border-slate-200 bg-slate-50 p-4">
-      {/* NAGŁÓWEK Z ELESTYCZNYM ROZSTAWIENIEM PRZYCISKÓW */}
       <div className="flex w-full items-center justify-between">
         <button
           onClick={() => setShowAdvanced(!showAdvanced)}
@@ -76,7 +76,6 @@ export default function Settings({
         )}
       </div>
 
-      {/* SEKCJA ZAAWANSOWANA */}
       {showAdvanced && (
         <SettingsAdvanced
           {...{
@@ -93,7 +92,6 @@ export default function Settings({
         />
       )}
 
-      {/* SEKCJA PODSTAWOWA */}
       <SettingsBasic
         checkT7={checkT7}
         setCheckT7={setCheckT7}

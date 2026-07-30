@@ -49,18 +49,17 @@ export default function PrimerizeWasmPython() {
         checkT7,
       });
 
-      // 3. OPTIONAL VISUAL FEEDBACK: Update the textarea to reflect the prepended sequence
+      // Update the textarea to reflect the prepended sequence
       if (sequence.trim().toUpperCase() !== updatedSequence) {
         setSequence(updatedSequence);
       }
 
       setResults(scriptOutput);
 
-      // If the python core generated biological alerts, store them in the warning state
+      // python core generated biological alerts
       if (capturedWarning) {
         setEngineWarning(capturedWarning);
       }
-
     } catch (error: any) {
       // This catches fatal blockages (e.g. invalid letters, 0 primers built)
       setValidationError(error.message);
@@ -69,26 +68,23 @@ export default function PrimerizeWasmPython() {
     }
   };
 
+  // setTimout before handleDesign to properly display info to the user that the engine is running
   const handleDesignClick = () => {
-    // 1. Natychmiast czyścimy stare błędy i włączamy tryb ładowania
     setValidationError('');
     setEngineWarning('');
     setResults('');
     setIsLoading(true);
 
-    // 2. Dajemy Reactowi i przeglądarce 50ms na zaktualizowanie wyglądu przycisku
+    // 50ms for actualization of button appearance
     setTimeout(async () => {
       try {
-        // Wywołujemy Twoją oryginalną logikę obliczeniową
         await handleDesign();
       } catch (error: any) {
-        // Na wypadek gdyby handleDesign sam nie złapał błędu
+        // in case handleDesign wouldn't catch an error
         setValidationError(error.message);
         setIsLoading(false);
       }
-      // UWAGA: setIsLoading(false) jest już wywoływane wewnątrz
-      // bloku finally Twojej oryginalnej funkcji handleDesign,
-      // więc nie musimy go tu dublować, jeśli wszystko pójdzie dobrze.
+      // setIsLoading(false) will be executed in handleDesign
     }, 50);
   };
 

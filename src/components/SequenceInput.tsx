@@ -1,10 +1,8 @@
-import React from 'react';
-
 interface SequenceInputProps {
   sequence: string;
   setSequence: (value: string) => void;
-  prefix: string; // NEW STATE
-  setPrefix: (value: string) => void; // NEW DISPATCHER
+  prefix: string;
+  setPrefix: (value: string) => void;
   onCalculate: () => void;
   engineReady: boolean;
   isLoading: boolean;
@@ -23,7 +21,6 @@ export default function SequenceInput({
 }: SequenceInputProps) {
   return (
     <div className="flex flex-col gap-4">
-      {/* NEW CONSTRUCT PREFIX INPUT FIELD */}
       <div className="flex flex-col gap-1">
         <label className="block text-sm font-semibold text-slate-700">
           Construct Name
@@ -58,7 +55,6 @@ export default function SequenceInput({
             setSequence(e.target.value);
             clearError();
           }}
-          //         disabled={!engineReady || isLoading}
           disabled={isLoading}
         />
       </div>
