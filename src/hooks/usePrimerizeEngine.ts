@@ -81,7 +81,7 @@ export function usePrimerizeEngine(): UsePrimerizeEngineResult {
         for (const file of primerizeFiles) {
           if (!isMounted) return;
           setStatus(`Loading ${file} into WASM filesystem...`);
-          const response = await fetch(`/primerize/${file}`);
+          const response = await fetch(`primerize/${file}`);
           if (!response.ok)
             throw new Error(`Failed to download public asset: ${file}`);
           const fileContent = await response.text();
