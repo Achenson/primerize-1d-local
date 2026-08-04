@@ -44,6 +44,17 @@ Powered by the Primerize 1D Engine (Developed by Das Lab, Stanford University) v
 
 This implementation builds directly on the core biological and thermodynamic models developed by Stanford University's Das Lab, making their scientific utilities universally available via client-side WebAssembly execution contexts. We thank the original authors for open-sourcing their bioinformatic architecture.
 
+* **Source Repository:** [ribokit/Primerize](https://github.com/ribokit/Primerize)
+* **Original Platform:** [primerize.stanford.edu](https://primerize.stanford.edu/)
+* **Protocol:** [primerize.stanford.edu/protocol](https://primerize.stanford.edu/protocol/)
+* **Full Documentation:** [ribokit.github.io/Primerize](https://ribokit.github.io/Primerize/)
+
+If you use this algorithm or tool in your research, please cite the foundational literature from the original creators:
+
+> Tian, S., et al. (2015)  
+> **Primerize: automated primer assembly for transcribing non-coding RNA domains**  
+> *Nucleic Acids Research* 43 (W1): W522–W526. [https://doi.org/10.1093/nar/gkv538](https://doi.org/10.1093/nar/gkv538)
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
