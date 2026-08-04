@@ -188,10 +188,10 @@ test.describe('Stanford Primerize 1D - WebAssembly E2E Test', () => {
     await expect(resultsTerminal).toContainText('Oligo_1F (35 bp)');
     await expect(resultsTerminal).toContainText(expectedPrimer1);
 
-    await expect(resultsTerminal).toContainText('Oligo_2F (35 bp)');
+    await expect(resultsTerminal).toContainText('Oligo_2R (35 bp)');
     await expect(resultsTerminal).toContainText(expectedPrimer2);
 
-    await expect(resultsTerminal).toContainText('Oligo_3R (44 bp)');
+    await expect(resultsTerminal).toContainText('Oligo_3F (44 bp)');
     await expect(resultsTerminal).toContainText(expectedPrimer3);
 
     await expect(resultsTerminal).toContainText('Oligo_4R (34 bp)');

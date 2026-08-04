@@ -92,13 +92,12 @@ def run_design(
         output.append(sub_sep)
 
         total_primers = len(primers_list)
-        half = total_primers // 2
 
         for i, primer in enumerate(primers_list):
-            direction = "F" if i < half else "R"
+            primer_num = i + 1
+            direction = "F" if (i % 2 == 0) else "R"
 
-            # construct the identifier identically to the original Stanford tool
-            p_id = f"{prefix}_{i + 1}{direction}"
+            p_id = f"{prefix}_{primer_num}{direction}"
             p_seq = str(primer).strip().upper()
 
             output.append(f"{p_id} ({len(p_seq)} bp)")
