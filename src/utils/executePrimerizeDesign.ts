@@ -25,7 +25,7 @@ export async function executePrimerizeDesign({
   pyodideInstance,
   checkT7,
 }: DesignParams): Promise<DesignResult> {
-  let cleanSeq = sequence.trim().toUpperCase();
+  let cleanSeq = sequence.trim().toUpperCase().replace(/U/g, "T");
 
   if (!cleanSeq) {
     throw new Error('Sequence input cannot be empty.');

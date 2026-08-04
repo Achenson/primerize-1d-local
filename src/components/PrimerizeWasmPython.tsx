@@ -49,7 +49,7 @@ export default function PrimerizeWasmPython() {
         checkT7,
       });
 
-      // Update the textarea to reflect the prepended sequence
+      // Update the textarea to reflect the prepended sequence and U to T conversion
       if (sequence.trim().toUpperCase() !== updatedSequence) {
         setSequence(updatedSequence);
       }
