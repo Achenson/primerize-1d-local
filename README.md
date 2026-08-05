@@ -1,4 +1,4 @@
-# Primerize 1D (Local - Python WASM)
+# Primerize 1D (Local - Python WASM) 
 
 A Web application for running Primerize 1D algorithm entirely inside your browser. By utilizing WebAssembly (WASM), this tool runs the core scientific Python algorithms locally on the user's machine — eliminating the need for a backend server or external API calls.
 
