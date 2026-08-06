@@ -1,6 +1,6 @@
-# Primerize 1D (Local - Python WASM) 
+# Primerize 1D (Local - Python WASM)
 
-A Web application for running Primerize 1D algorithm entirely inside your browser. By utilizing WebAssembly (WASM), this tool runs the core scientific Python algorithms locally on the user's machine — eliminating the need for a backend server or external API calls.
+A Web application for running RiboKit Primerize 1D algorithm entirely inside your browser. By utilizing WebAssembly (WASM), this tool runs the core scientific Python algorithms locally on the user's machine — eliminating the need for a backend server or external API calls.
 
 ## 🚀 Key Features
 
@@ -40,7 +40,7 @@ To run the application locally on your machine, follow these steps:
 
 ## 📜 Acknowledgments & Attribution
 
-Powered by the Primerize 1D Engine (Developed by Das Lab, Stanford University) via WebAssembly.
+Powered by the RiboKit Primerize 1D Engine (Developed by Das Lab, Stanford University) via WebAssembly.
 
 This implementation builds directly on the core biological and thermodynamic models developed by Stanford University's Das Lab, making their scientific utilities universally available via client-side WebAssembly execution contexts. We thank the original authors for open-sourcing their bioinformatic architecture.
 
